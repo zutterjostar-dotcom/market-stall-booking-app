@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}ชำระเงินการจอง{% endblock %}
+
+{% block content %}
+<h1 class="mb-4 text-center">ชำระเงินการจอง #{{ booking.id }}</h1>
+<div class="card p-4 mx-auto" style="max-width: 600px;">
+    <p class="lead"><strong>แผงตลาด:</strong> {{ booking.stall.name }}</p>
+    <p><strong>ชื่อผู้ค้า:</strong> {{ booking.vendor_name }}</p>
+    <p><strong>ช่วงเวลาจอง:</strong> {{ booking.start_date.strftime('%d/%m/%Y') }} - {{ booking.end_date.strftime('%d/%m/%Y') }}</p>
+    <p><strong>ราคารวม:</strong> <strong class="text-success">{{ "%.2f" | format(booking.total_price) }} บาท</strong></p>
+
+    <hr>
+
+    <p class="mb-3">ยืนยันการชำระเงินสำหรับการจองนี้หรือไม่?</p>
+    <form method="POST" action="{{ url_for('pay_booking', booking_id=booking.id) }}">
+        <button type="submit" class="btn btn-success w-100">ยืนยันการชำระเงิน</button>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary w-100 mt-2">ยกเลิก</a>
+    </form>
+</div>
+{% endblock %}

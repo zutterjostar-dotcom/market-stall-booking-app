@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Admin Dashboard</h1>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="bookings-tab" data-bs-toggle="tab" data-bs-target="#bookings" type="button" role="tab" aria-controls="bookings" aria-selected="true">การจองทั้งหมด</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="stalls-tab" data-bs-toggle="tab" data-bs-target="#stalls" type="button" role="tab" aria-controls="stalls" aria-selected="false">จัดการแผงตลาด</button>
+    </li>
+</ul>
+
+<div class="tab-content" id="myTabContent">
+    <div class="tab-pane fade show active" id="bookings" role="tabpanel" aria-labelledby="bookings-tab">
+        </div>
+
+    <div class="tab-pane fade" id="stalls" role="tabpanel" aria-labelledby="stalls-tab">
+        <h2 class="mt-4">จัดการแผงตลาด</h2>
+        <a href="{{ url_for('add_stall') }}" class="btn btn-primary mb-3">เพิ่มแผงใหม่</a>
+        {% if stalls %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ชื่อแผง</th>
+                        <th>ราคา/วัน</th>
+                        <th>คำอธิบาย</th>
+                        <th>การจัดการ</th>
+                        <th>สถานะ</th>
+                        <th>หลักฐานการชำระเงิน</th> <th>การจัดการ</th>
+                    </tr>
+                </thead>
+               <tbody>
+    {% for booking in bookings %}
+    <tr>
+        <td>
+            {% if booking.status == 'confirmed' %}
+            <span class="badge bg-success">ยืนยันแล้ว</span>
+            {% elif booking.status == 'pending' %}
+            <span class="badge bg-warning text-dark">รออนุมัติ</span>
+            {% elif booking.status == 'rejected' %}
+            <span class="badge bg-danger">ถูกปฏิเสธ</span>
+            {% elif booking.status == 'paid' %}
+            <span class="badge bg-primary">ชำระเงินแล้ว</span>
+            {% elif booking.status == 'cancelled' %}
+            <span class="badge bg-secondary">ยกเลิกแล้ว</span>
+            {% elif booking.status == 'pending_verification' %}
+            <span class="badge bg-info text-dark">รอตรวจสอบการชำระเงิน</span> {% else %}
+            <span class="badge bg-secondary">{{ booking.status }}</span>
+            {% endif %}
+        </td>
+        <td>
+             {% if booking.payment_proof_url %}
+                <a href="{{ booking.payment_proof_url }}" target="_blank">ดูหลักฐาน</a>
+            {% else %}
+                ไม่มี
+            {% endif %}
+        </td>
+        <td>
+            {% if booking.status == 'pending' %}
+                {% elif booking.status == 'pending_verification' %}
+                <form method="POST" action="{{ url_for('update_booking_status', booking_id=booking.id) }}" style="display:inline;">
+                    <input type="hidden" name="status" value="paid">
+                    <button type="submit" class="btn btn-sm btn-primary">ยืนยันการชำระเงิน</button>
+                </form>
+                <form method="POST" action="{{ url_for('update_booking_status', booking_id=booking.id) }}" style="display:inline;">
+                    <input type="hidden" name="status" value="rejected">
+                    <button type="submit" class="btn btn-sm btn-danger">ปฏิเสธ</button>
+                </form>
+            {% else %}
+                -
+            {% endif %}
+            </td>
+    </tr>
+    {% endfor %}
+</tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="alert alert-info">ยังไม่มีแผงตลาดในระบบ</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
