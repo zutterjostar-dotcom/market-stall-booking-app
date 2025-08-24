@@ -398,4 +398,19 @@ def cancel_booking(booking_id):
 if __name__ == '__main__':
      with app.app_context():
         db.create_all()
+        db.session.query(User).delete()
+        new_admin = User(username='admin', role='admin')
+        new_admin.password = 'admin123'
+        db.session.add(new_admin)
+        db.session.query(Stall).delete()
+        stall_price_per_day = 50.00
+        default_description = "แผงตลาดมาตรฐาน เหมาะสำหรับสินค้าทั่วไป"
+        stall_number = 1
+        for row in range(1, 5):
+            for lock in range(1, 9):
+                stall_name = f'แผงที่ {stall_number}'
+                new_stall = Stall(name=stall_name, price_per_day=stall_price_per_day, description=default_description)
+                db.session.add(new_stall)
+                stall_number += 1
+        db.session.commit()
     #app.run(debug=True)#
