@@ -5,27 +5,28 @@
 {% block content %}
 <h1 class="mb-4">แผงตลาดทั้งหมด</h1>
 <div class="row row-cols-1 row-cols-md-4 g-4">
-    {% for stall in stalls %}
+    {% for item in stalls_with_status %}
     <div class="col">
         <div class="card h-100 shadow-sm">
             <div class="card-body d-flex flex-column">
-                <h5 class="card-title">{{ stall.name }}</h5>  <p class="card-text text-muted">{{ stall.description }}</p>
+                <h5 class="card-title">{{ item.stall.name }}</h5>
+                <p class="card-text text-muted">{{ item.stall.description }}</p>
                 <div class="mt-auto">
                     <p class="card-text">
                         <strong>สถานะ:</strong>
-                        {% if stall.status == 'available' %}
+                        {% if item.status == 'available' %}
                             <span class="badge bg-success">ว่าง</span>
-                        {% elif stall.status == 'booked' %}
+                        {% elif item.status == 'occupied' %}
                             <span class="badge bg-danger">ไม่ว่าง</span>
                         {% else %}
                             <span class="badge bg-warning text-dark">ระหว่างดำเนินการ</span>
                         {% endif %}
                     </p>
                     <p class="card-text">
-                        <strong>ราคา:</strong> {{ stall.price_per_day }} บาท/วัน
+                        <strong>ราคา:</strong> {{ item.stall.price_per_day }} บาท/วัน
                     </p>
                     <div class="d-grid mt-2">
-                        <a href="{{ url_for('book_stall', stall_id=stall.id) }}" class="btn btn-primary {% if stall.status != 'available' %}disabled{% endif %}">
+                        <a href="{{ url_for('book_stall', stall_id=item.stall.id) }}" class="btn btn-primary {% if item.status != 'available' %}disabled{% endif %}">
                             จองแผงตลาด
                         </a>
                     </div>
