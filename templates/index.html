@@ -1,46 +1,38 @@
-{% extends "base.html" %} {# บอก Jinja2 ว่าหน้านี้ extends มาจาก base.html #}
+{% extends "base.html" %}
 
-{% block title %}หน้าหลัก - แอปจองแผงตลาด{% endblock %}
+{% block title %}หน้าแรก{% endblock %}
 
 {% block content %}
-<h1 class="mb-4 text-center">แผงตลาดที่ว่างอยู่</h1>
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
-
-<h1 class="mb-4 text-center">แผงตลาดที่ว่างอยู่สำหรับวันที่ {{ today.strftime('%d/%m/%Y') }}</h1>
-
-<div class="row">
-    {% for item in stalls_with_status %}
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 {% if item.status == 'paid' %}bg-primary text-white{% elif item.status == 'confirmed' %}bg-danger text-white{% elif item.status == 'pending' %}bg-warning text-dark{% elif item.status == 'cancelled' %}bg-secondary text-white{% else %}bg-white{% endif %}">
-            <div class="card-body">
-                <h5 class="card-title">{{ item.stall.name }}</h5>
-                {% if item.status == 'available' %}
-                <a href="{{ url_for('book_stall', stall_id=item.stall.id) }}" class="btn btn-primary">จองแผงนี้</a>
-                {% elif item.status == 'pending' %}
-                <button class="btn btn-secondary" disabled>รอการยืนยัน</button>
-                {% elif item.status == 'confirmed' %}
-                <button class="btn btn-danger" disabled>จองแล้ว</button>
-                {% elif item.status == 'paid' %}
-                <button class="btn btn-primary" disabled>จ่ายเงินแล้ว</button>
-                {% elif item.status == 'cancelled' %}
-                <button class="btn btn-secondary" disabled>ยกเลิกแล้ว</button>
-                {% else %}
-                <button class="btn btn-secondary" disabled>ไม่ว่าง</button>
-                {% endif %}
+<h1 class="mb-4">แผงตลาดทั้งหมด</h1>
+<div class="row row-cols-1 row-cols-md-4 g-4">
+    {% for stall in stalls %}
+    <div class="col">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">{{ stall.name }}</h5>  <p class="card-text text-muted">{{ stall.description }}</p>
+                <div class="mt-auto">
+                    <p class="card-text">
+                        <strong>สถานะ:</strong>
+                        {% if stall.status == 'available' %}
+                            <span class="badge bg-success">ว่าง</span>
+                        {% elif stall.status == 'booked' %}
+                            <span class="badge bg-danger">ไม่ว่าง</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">ระหว่างดำเนินการ</span>
+                        {% endif %}
+                    </p>
+                    <p class="card-text">
+                        <strong>ราคา:</strong> {{ stall.price_per_day }} บาท/วัน
+                    </p>
+                    <div class="d-grid mt-2">
+                        <a href="{{ url_for('book_stall', stall_id=stall.id) }}" class="btn btn-primary {% if stall.status != 'available' %}disabled{% endif %}">
+                            จองแผงตลาด
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    {% else %}
     {% endfor %}
 </div>
 {% endblock %}
