@@ -6,6 +6,9 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date
+from flask_login import current_user
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+
 
 app = Flask(__name__)
 
@@ -31,8 +34,23 @@ def allowed_file(filename):
 
 db = SQLAlchemy(app)
 
+login_manager = LoginManager()
+login_manager.init_app(app)
 
-class User(db.Model):
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            flash('กรุณาเข้าสู่ระบบด้วยบัญชี Admin เพื่อเข้าถึงหน้านี้', 'danger')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False) 
@@ -115,7 +133,8 @@ def index():
         else:
             stalls_with_status.append({'stall': stall, 'status': 'available'})
 
-    return render_template('index.html', stalls_with_status=stalls_with_status, today=today)
+    return render_template('index.html', stalls_with_status=stalls_with_status, today=today, current_user=current_user)
+
 
 @app.route('/book/<int:stall_id>', methods=['GET', 'POST'])
 def book_stall(stall_id):
@@ -194,7 +213,7 @@ def book_stall(stall_id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if 'logged_in' in session: 
+    if current_user.is_authenticated:
         return redirect(url_for('admin_dashboard'))
 
     if request.method == 'POST':
@@ -203,9 +222,7 @@ def login():
 
         user = User.query.filter_by(username=username).first()
         if user and user.verify_password(password):
-            session['logged_in'] = True
-            session['username'] = user.username
-            session['role'] = user.role
+            login_user(user) # ใช้ login_user จาก Flask-Login
             flash('เข้าสู่ระบบสำเร็จ!', 'success')
             return redirect(url_for('admin_dashboard'))
         else:
@@ -215,9 +232,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.pop('logged_in', None)
-    session.pop('username', None)
-    session.pop('role', None)
+    logout_user() # ใช้ logout_user จาก Flask-Login
     flash('ออกจากระบบแล้ว', 'info')
     return redirect(url_for('index'))
 
@@ -398,19 +413,19 @@ def cancel_booking(booking_id):
 if __name__ == '__main__':
      with app.app_context():
         db.create_all()
-       # db.session.query(User).delete()#
-        #new_admin = User(username='admin', role='admin')#
-        #new_admin.password = 'admin123'
-        #db.session.add(new_admin)
-        #db.session.query(Stall).delete()
-        #stall_price_per_day = 50.00
-        #default_description = "แผงตลาดมาตรฐาน เหมาะสำหรับสินค้าทั่วไป"
-        #stall_number = 1
-        #for row in range(1, 5):
-            #for lock in range(1, 9):
-             #   stall_name = f'แผงที่ {stall_number}'
-              #  new_stall = Stall(name=stall_name, price_per_day=stall_price_per_day, description=default_description)
-               # db.session.add(new_stall)
-                #stall_number += 1
-        #db.session.commit()#
+        db.session.query(User).delete()
+        new_admin = User(username='admin', role='admin')
+        new_admin.password = 'admin123'
+        db.session.add(new_admin)
+        db.session.query(Stall).delete()
+        stall_price_per_day = 50.00
+        default_description = "แผงตลาดมาตรฐาน เหมาะสำหรับสินค้าทั่วไป"
+        stall_number = 1
+        for row in range(1, 5):
+            for lock in range(1, 9):
+                stall_name = f'แผงที่ {stall_number}'
+                new_stall = Stall(name=stall_name, price_per_day=stall_price_per_day, description=default_description)
+                db.session.add(new_stall)
+                stall_number += 1
+        db.session.commit()
     #app.run(debug=True)#
