@@ -27,7 +27,7 @@ body {
 }
 
 .booking-success-message {
-    background-color: #d4edda;
+    background-color:  rgba(255, 255, 255, 0.85);
     color: #155724;
     border: 1px solid #c3e6cb;
     padding: 15px;
@@ -44,11 +44,11 @@ body {
     background-repeat: no-repeat;
 }
 
-.container {
+/*.container {
     background-color: rgba(255, 255, 255, 0.85);
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
     margin-top: 20px;
     margin-bottom: 20px;
-}
+}*/
