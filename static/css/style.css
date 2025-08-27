@@ -17,13 +17,13 @@ body {
 }
 
 .btn-primary {
-    background-color: #6c757d;
-    border-color: #6c757d; 
+    background-color: #41a2f7;
+    border-color: #41a2f7; 
 }
 
 .btn-primary:hover {
-    background-color: #5a6268;
-    border-color: #545b62;
+    background-color: #0091ff;
+    border-color: #0080ff;
 }
 
 .booking-success-message {
@@ -51,8 +51,4 @@ body {
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
     margin-top: 20px;
     margin-bottom: 20px;
-}
-
-.card {
-    background-color: rgba(255, 255, 255, 0.95); 
 }
