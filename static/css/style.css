@@ -35,3 +35,11 @@ body {
     margin-top: 20px;
     text-align: center;
 }
+
+body {
+    background-image: url('../images/market_bg.webp');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}
