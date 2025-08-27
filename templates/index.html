@@ -4,14 +4,14 @@
 
 {% block content %}
 <h1 class="mb-4">แผงตลาดทั้งหมด</h1>
-<div class="row row-cols-1 row-cols-md-4 g-4">
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
     {% for item in stalls_with_status %}
     <div class="col">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100 shadow-sm border-{{ 'success' if item.status == 'available' else 'danger' }}">
             <div class="card-body d-flex flex-column">
-                <h5 class="card-title">{{ item.stall.name }}</h5>
-                <p class="card-text text-muted">{{ item.stall.description }}</p>
-                <div class="mt-auto">
+                <h5 class="card-title text-center">{{ item.stall.name }}</h5>
+                <p class="card-text text-muted text-center">{{ item.stall.description }}</p>
+                <div class="mt-auto text-center">
                     <p class="card-text">
                         <strong>สถานะ:</strong>
                         {% if item.status == 'available' %}
@@ -25,7 +25,7 @@
                     <p class="card-text">
                         <strong>ราคา:</strong> {{ item.stall.price_per_day }} บาท/วัน
                     </p>
-                    <div class="d-grid mt-2">
+                    <div class="d-grid mt-3">
                         <a href="{{ url_for('book_stall', stall_id=item.stall.id) }}" class="btn btn-primary {% if item.status != 'available' %}disabled{% endif %}">
                             จองแผงตลาด
                         </a>
