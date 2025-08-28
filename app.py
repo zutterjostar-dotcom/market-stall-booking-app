@@ -269,25 +269,25 @@ def add_stall():
 
     return render_template('add_edit_stall.html')
 
-@app.route('/admin/stalls/edit/<int:stall_id>', methods=['GET', 'POST'])
+@app.route('/admin/booking/<int:booking_id>/status', methods=['POST'])
 @admin_required
-def edit_stall(stall_id):
-    stall = Stall.query.get_or_404(stall_id)
+def update_booking_status(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    new_status = request.form.get('status')
 
-    if request.method == 'POST':
-        stall.name = request.form['name']
-        stall.price_per_day = request.form['price_per_day']
-        stall.description = request.form.get('description')
-
+    # เพิ่มเงื่อนไขสถานะ 'pending_verification' เพื่อให้สามารถอนุมัติได้
+    if new_status in ['approved', 'rejected'] and booking.status in ['pending', 'pending_verification']:
+        booking.status = new_status
         try:
             db.session.commit()
-            flash('แก้ไขข้อมูลแผงตลาดสำเร็จ', 'success')
-            return redirect(url_for('admin_dashboard'))
+            flash(f'อัปเดตสถานะการจอง #{booking.id} เป็น "{new_status}" เรียบร้อยแล้ว', 'success')
         except Exception as e:
             db.session.rollback()
-            flash(f'เกิดข้อผิดพลาดในการแก้ไขแผง: {e}', 'danger')
+            flash(f'เกิดข้อผิดพลาดในการอัปเดตสถานะ: {e}', 'danger')
+    else:
+        flash('สถานะการจองไม่ถูกต้อง หรือคุณไม่สามารถอนุมัติได้', 'danger')
 
-    return render_template('add_edit_stall.html', stall=stall)
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/stalls/delete/<int:stall_id>', methods=['POST'])
 @admin_required
