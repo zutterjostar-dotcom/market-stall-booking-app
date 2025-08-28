@@ -269,25 +269,25 @@ def add_stall():
 
     return render_template('add_edit_stall.html')
 
-@app.route('/admin/booking/<int:booking_id>/status', methods=['POST'])
+@app.route('/admin/stalls/edit/<int:stall_id>', methods=['GET', 'POST'])
 @admin_required
-def update_booking_status(booking_id):
-    booking = Booking.query.get_or_404(booking_id)
-    new_status = request.form.get('status')
+def edit_stall(stall_id):
+    stall = Stall.query.get_or_404(stall_id)
 
-    # เพิ่มเงื่อนไขสถานะ 'pending_verification' เพื่อให้สามารถอนุมัติได้
-    if new_status in ['approved', 'rejected'] and booking.status in ['pending', 'pending_verification']:
-        booking.status = new_status
+    if request.method == 'POST':
+        stall.name = request.form['name']
+        stall.price_per_day = request.form['price_per_day']
+        stall.description = request.form.get('description')
+
         try:
             db.session.commit()
-            flash(f'อัปเดตสถานะการจอง #{booking.id} เป็น "{new_status}" เรียบร้อยแล้ว', 'success')
+            flash('แก้ไขข้อมูลแผงตลาดสำเร็จ', 'success')
+            return redirect(url_for('admin_dashboard'))
         except Exception as e:
             db.session.rollback()
-            flash(f'เกิดข้อผิดพลาดในการอัปเดตสถานะ: {e}', 'danger')
-    else:
-        flash('สถานะการจองไม่ถูกต้อง หรือคุณไม่สามารถอนุมัติได้', 'danger')
+            flash(f'เกิดข้อผิดพลาดในการแก้ไขแผง: {e}', 'danger')
 
-    return redirect(url_for('admin_dashboard'))
+    return render_template('add_edit_stall.html', stall=stall)
 
 @app.route('/admin/stalls/delete/<int:stall_id>', methods=['POST'])
 @admin_required
@@ -347,6 +347,24 @@ def upload_payment_proof(booking_id):
         flash('ประเภทไฟล์ไม่ถูกต้อง (อนุญาตเฉพาะ PNG, JPG, JPEG, GIF)', 'danger')
 
     return redirect(url_for('index'))
+
+@app.route('/admin/booking/<int:booking_id>/cancel', methods=['POST'])
+@admin_required
+def cancel_booking(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+
+    if booking.status in ['confirmed', 'pending', 'paid']:
+        booking.status = 'cancelled'
+        try:
+            db.session.commit()
+            flash(f'การจอง #{booking.id} ถูกยกเลิกเรียบร้อยแล้ว', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'เกิดข้อผิดพลาดในการยกเลิกการจอง: {e}', 'danger')
+    else:
+        flash('ไม่สามารถยกเลิกการจองที่มีสถานะนี้ได้', 'danger')
+
+    return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':
       with app.app_context():
