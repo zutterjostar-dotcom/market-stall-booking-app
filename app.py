@@ -348,24 +348,6 @@ def upload_payment_proof(booking_id):
 
     return redirect(url_for('index'))
 
-@app.route('/admin/booking/<int:booking_id>/cancel', methods=['POST'])
-@admin_required
-def cancel_booking(booking_id):
-    booking = Booking.query.get_or_404(booking_id)
-
-    if booking.status in ['confirmed', 'pending', 'paid']:
-        booking.status = 'cancelled'
-        try:
-            db.session.commit()
-            flash(f'การจอง #{booking.id} ถูกยกเลิกเรียบร้อยแล้ว', 'success')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'เกิดข้อผิดพลาดในการยกเลิกการจอง: {e}', 'danger')
-    else:
-        flash('ไม่สามารถยกเลิกการจองที่มีสถานะนี้ได้', 'danger')
-
-    return redirect(url_for('admin_dashboard'))
-
 if __name__ == '__main__':
       with app.app_context():
         db.create_all()
