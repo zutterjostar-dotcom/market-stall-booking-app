@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-#import datetime
+import datetime
 import os
 from functools import wraps
 from werkzeug.utils import secure_filename
@@ -12,10 +12,11 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 
 
 app = Flask(__name__)
-
 app.config['SECRET_KEY'] = 'your_super_secret_key_here'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///market.db'
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -37,6 +38,7 @@ db = SQLAlchemy(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -53,9 +55,9 @@ def admin_required(f):
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False) 
-    role = db.Column(db.String(20), nullable=False, default='admin')
+    username = db.Column(db.String(20), unique=True, nullable=False)
+    password = db.Column(db.String(80), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default='vendor')
 
     @property
     def password(self):
@@ -73,11 +75,9 @@ class User(db.Model, UserMixin):
 
 class Stall(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(200), nullable=False)
     price_per_day = db.Column(db.Float, nullable=False)
-    description = db.Column(db.Text, nullable=True)
-
-    
     bookings = db.relationship('Booking', backref='stall', lazy=True)
 
     def __repr__(self):
@@ -87,17 +87,14 @@ class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     vendor_name = db.Column(db.String(100), nullable=False)
     vendor_phone = db.Column(db.String(20), nullable=False)
-    vendor_email = db.Column(db.String(100), nullable=True)
-    image_url = db.Column(db.String(255), nullable=True) 
-    status = db.Column(db.String(20), default='pending', nullable=False)
+    vendor_email = db.Column(db.String(100), nullable=True) # Changed to nullable
     stall_id = db.Column(db.Integer, db.ForeignKey('stall.id'), nullable=False)
-    payment_proof_url = db.Column(db.String(255), nullable=True)
-
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     total_price = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), nullable=False, default='confirmed')
-    booked_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
+    status = db.Column(db.String(20), nullable=False)
+    booked_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    payment_proof_url = db.Column(db.String(200), nullable=True)
 
     def __repr__(self):
         return f'<Booking {self.id} - {self.vendor_name} for Stall {self.stall.name}>'
@@ -113,21 +110,13 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-from datetime import date
-
-# โค้ดส่วนอื่นๆ
-from datetime import datetime
-
-# ...
-# โค้ดส่วนอื่นๆ
-
 @app.route('/')
 def index():
-    today = datetime.date.today()
+    today = datetime.datetime.now().date()
     stalls = Stall.query.all()
     stalls_with_status = []
     for stall in stalls:
-        # ตรวจสอบการจองในวันปัจจุบัน
+        # ตรวจสอบการจองที่ยังไม่สิ้นสุด
         booking = Booking.query.filter_by(
             stall_id=stall.id,
             start_date=today,
@@ -142,21 +131,18 @@ def index():
                 status = 'pending'
             else:
                 status = 'occupied'
-
-        stalls_with_status.append({'stall': stall, 'status': status})
         
+        stalls_with_status.append({'stall': stall, 'status': status})
     return render_template(
         'index.html', 
         stalls_with_status=stalls_with_status
     )
 
-# โค้ดส่วนอื่นๆ ที่เกี่ยวข้องกับการจองแผง
 @app.route('/book/<int:stall_id>', methods=['GET', 'POST'])
 def book_stall(stall_id):
     stall = Stall.query.get_or_404(stall_id)
-    today = datetime.date.today()
+    today = datetime.datetime.now().date()
     
-    # ดึงข้อมูลการจองสำหรับวันนี้
     today_booking = Booking.query.filter_by(
         stall_id=stall_id,
         start_date=today,
@@ -166,40 +152,30 @@ def book_stall(stall_id):
     if request.method == 'POST':
         vendor_name = request.form.get('vendor_name')
         vendor_phone = request.form.get('vendor_phone')
+        vendor_email = request.form.get('vendor_email')
         
-        # ตั้งค่า start_date และ end_date เป็นวันปัจจุบันโดยอัตโนมัติ
         start_date = today
         end_date = today
-        
-        # กำหนดค่าเริ่มต้นสำหรับคอลัมน์ที่ไม่ได้รับข้อมูลจากฟอร์ม
-        vendor_email = None # กำหนดเป็น None หรือค่าเริ่มต้นที่เหมาะสม
-        total_price = stall.price_per_day
-        image_proof_url = None
 
         try:
-            # ตรวจสอบว่ามีข้อมูลการจองสำหรับวันนี้อยู่แล้วหรือไม่
             if today_booking:
                 flash('แผงตลาดนี้ถูกจองแล้วสำหรับวันนี้', 'danger')
                 return redirect(url_for('index'))
             
-            # สร้างรายการจองใหม่
             new_booking = Booking(
                 vendor_name=vendor_name,
                 vendor_phone=vendor_phone,
-                vendor_email=vendor_email,  # เพิ่ม field นี้
+                vendor_email=vendor_email,
                 stall_id=stall_id,
                 start_date=start_date,
                 end_date=end_date,
-                status="pending",
-                total_price=total_price,  # เพิ่ม field นี้
-                payment_proof_url=image_proof_url # เพิ่ม field นี้
+                total_price=stall.price_per_day,
+                status="pending"
             )
             
-            # เพิ่มการจองใหม่ลงในฐานข้อมูล
             db.session.add(new_booking)
             db.session.commit()
             
-            # ส่งผู้ใช้ไปยังหน้ายืนยันการจอง
             flash('การจองสำเร็จ! กรุณารอการตรวจสอบจากผู้ดูแล', 'success')
             return redirect(url_for('index'))
         
@@ -208,7 +184,6 @@ def book_stall(stall_id):
             flash(f'เกิดข้อผิดพลาดในการจอง: {str(e)}', 'danger')
             return redirect(url_for('book_stall', stall_id=stall_id))
     
-    # หากเป็น GET request ให้แสดงหน้า book.html
     return render_template('book.html', stall=stall, today_booking=today_booking)
 
 @app.route('/login', methods=['GET', 'POST'])
