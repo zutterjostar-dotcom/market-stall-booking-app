@@ -1,37 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}จองแผงที่ {{ stall.name }}{% endblock %}
+{% block title %}จองแผงตลาด{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">จองแผงตลาด</h1>
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">{{ stall.name }}</h5>
-                <p class="card-text text-muted">{{ stall.description }}</p>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <strong>ราคาต่อวัน:</strong> {{ stall.price_per_day }} บาท
-                    </li>
-                    <li class="list-group-item">
-                        <strong>สถานะ:</strong>
-                        <span class="badge bg-success">ว่าง</span>
-                    </li>
-                </ul>
-                <div class="mt-3">
-                    <a href="{{ url_for('index') }}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> กลับ</a>
-                </div>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header text-center">
+                <h3>จองแผงที่ {{ stall.id }}</h3>
             </div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-4">
-        <div class="card h-100 shadow-sm">
             <div class="card-body">
-                <h5 class="card-title">ข้อมูลผู้จอง</h5>
-                <form action="{{ url_for('book_stall', stall_id=stall.id) }}" method="post" enctype="multipart/form-data">
+                {% if today_booking %}
+                <div class="alert alert-warning text-center" role="alert">
+                    แผงตลาดนี้ถูกจองแล้วสำหรับวันนี้
+                </div>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary d-block mt-3">กลับหน้าแรก</a>
+                {% else %}
+                <form method="post">
                     <div class="mb-3">
-                        <label for="vendor_name" class="form-label">ชื่อ-นามสกุล</label>
+                        <label for="vendor_name" class="form-label">ชื่อผู้เช่า</label>
                         <input type="text" class="form-control" id="vendor_name" name="vendor_name" required>
                     </div>
                     <div class="mb-3">
@@ -39,16 +26,14 @@
                         <input type="tel" class="form-control" id="vendor_phone" name="vendor_phone" required>
                     </div>
                     <div class="mb-3">
-                        <label for="start_date" class="form-label">วันที่เริ่มจอง</label>
-                        <input type="date" class="form-control" id="start_date" name="start_date" required>
+                        <label for="vendor_email" class="form-label">อีเมล</label>
+                        <input type="email" class="form-control" id="vendor_email" name="vendor_email" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="end_date" class="form-label">วันที่สิ้นสุดการจอง</label>
-                        <input type="date" class="form-control" id="end_date" name="end_date" required>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">ยืนยันการจอง</button>
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100">ยืนยันการจอง</button>
                 </form>
+                {% endif %}
             </div>
         </div>
     </div>
