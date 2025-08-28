@@ -65,3 +65,48 @@ body {
     display: inline-block; 
     margin-bottom: 20px; 
 }
+
+/* โค้ดสำหรับผังแผงตลาด */
+.stall-map-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.stall-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: #333;
+    text-decoration: none;
+    transition: transform 0.2s ease-in-out;
+}
+
+.stall-box:hover {
+    transform: translateY(-5px);
+}
+
+.stall-available {
+    background-color: #e9f5e9; /* สีเขียวอ่อน */
+    border: 2px solid #28a745; /* ขอบสีเขียว */
+}
+
+.stall-occupied {
+    background-color: #f8d7da; /* สีแดงอ่อน */
+    border: 2px solid #dc3545; /* ขอบสีแดง */
+}
+
+.stall-pending {
+    background-color: #fff3cd; /* สีเหลืองอ่อน */
+    border: 2px solid #ffc107; /* ขอบสีเหลือง */
+}
+
+.stall-status-text {
+    font-weight: bold;
+    margin-top: 10px;
+}
