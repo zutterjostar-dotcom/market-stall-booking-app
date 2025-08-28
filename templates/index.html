@@ -4,9 +4,12 @@
 
 {% block content %}
 <h1 class="mb-4 market-title">ผังแผงตลาด</h1>
-<p class="text-center text-muted mb-4 market-title">
-    แผงตลาดมาตรฐาน เหมาะสำหรับสินค้าทั่วไป
-</p>
+
+<div class="card mb-4">
+    <div class="card-body text-center">
+        <img src="{{ url_for('static', filename='images/market_map.png') }}" alt="แผนที่ผังแผงตลาด" class="img-fluid">
+    </div>
+</div>
 
 <div class="stall-map-grid">
     {% for item in stalls_with_status %}
