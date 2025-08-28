@@ -13,7 +13,7 @@
 
 <div class="stall-map-grid">
     {% for item in stalls_with_status %}
-    <a href="{{ url_for('book_stall', stall_id=item.stall.id) }}" class="stall-box grid-item-{{ item.stall.id }} {% if item.status == 'available' %}stall-available{% elif item.status == 'occupied' %}stall-occupied{% else %}stall-pending{% endif %}">
+    <a href="{{ url_for('book_stall', stall_id=item.stall.id) }}" class="stall-box grid-item-{{ item.stall.id }} {% if item.status == 'available' %}stall-available{% elif item.status == 'occupied' %}stall-occupied{% elif item.status == 'pending' %}stall-pending{% endif %}">
         <strong>{{ item.stall.name }}</strong>
         <span class="stall-status-text">{{ 'ว่าง' if item.status == 'available' else 'ไม่ว่าง' if item.status == 'occupied' else 'รอการอนุมัติ' }}</span>
     </a>
