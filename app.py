@@ -142,7 +142,7 @@ def book_stall(stall_id):
     stall = Stall.query.get_or_404(stall_id)
     today = datetime.date.today()
     
-    # ตรวจสอบว่ามีข้อมูลการจองสำหรับวันนี้อยู่แล้วหรือไม่
+    # ดึงข้อมูลการจองสำหรับวันนี้
     today_booking = Booking.query.filter_by(
         stall_id=stall_id,
         start_date=today,
@@ -156,6 +156,11 @@ def book_stall(stall_id):
         # ตั้งค่า start_date และ end_date เป็นวันปัจจุบันโดยอัตโนมัติ
         start_date = today
         end_date = today
+        
+        # กำหนดค่าเริ่มต้นสำหรับคอลัมน์ที่ไม่ได้รับข้อมูลจากฟอร์ม
+        vendor_email = None # กำหนดเป็น None หรือค่าเริ่มต้นที่เหมาะสม
+        total_price = stall.price_per_day
+        image_proof_url = None
 
         try:
             # ตรวจสอบว่ามีข้อมูลการจองสำหรับวันนี้อยู่แล้วหรือไม่
@@ -167,10 +172,13 @@ def book_stall(stall_id):
             new_booking = Booking(
                 vendor_name=vendor_name,
                 vendor_phone=vendor_phone,
+                vendor_email=vendor_email,  # เพิ่ม field นี้
                 stall_id=stall_id,
                 start_date=start_date,
                 end_date=end_date,
-                status="pending"
+                status="pending",
+                total_price=total_price,  # เพิ่ม field นี้
+                payment_proof_url=image_proof_url # เพิ่ม field นี้
             )
             
             # เพิ่มการจองใหม่ลงในฐานข้อมูล
@@ -179,7 +187,7 @@ def book_stall(stall_id):
             
             # ส่งผู้ใช้ไปยังหน้ายืนยันการจอง
             flash('การจองสำเร็จ! กรุณารอการตรวจสอบจากผู้ดูแล', 'success')
-            return redirect(url_for('success'))
+            return redirect(url_for('index'))
         
         except Exception as e:
             db.session.rollback()
