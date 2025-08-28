@@ -144,12 +144,13 @@ def book_stall(stall_id):
     # ดึงข้อมูลการจองสำหรับวันนี้
     today_booking = Booking.query.filter_by(
         stall_id=stall_id,
-        booking_date=today
+        start_date=today,
+        end_date=today
     ).first()
 
     if request.method == 'POST':
-        vendor_name = request.form['vendor_name']
-        vendor_phone = request.form['vendor_phone']
+        vendor_name = request.form.get('vendor_name')
+        vendor_phone = request.form.get('vendor_phone')
         
         # ตั้งค่า start_date และ end_date เป็นวันปัจจุบันโดยอัตโนมัติ
         start_date = today
