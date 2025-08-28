@@ -203,7 +203,7 @@ def update_booking_status(booking_id):
     booking = Booking.query.get_or_404(booking_id)
     new_status = request.form.get('status')
 
-    if new_status in ['approved', 'rejected']:
+    if new_status in ['approved', 'rejected'] and booking.status in ['pending', 'pending_verification']:
         booking.status = new_status
         try:
             db.session.commit()
@@ -212,7 +212,7 @@ def update_booking_status(booking_id):
             db.session.rollback()
             flash(f'เกิดข้อผิดพลาดในการอัปเดตสถานะ: {e}', 'danger')
     else:
-        flash('สถานะไม่ถูกต้อง', 'danger')
+        flash('สถานะการจองไม่ถูกต้อง หรือคุณไม่สามารถอนุมัติได้', 'danger')
 
     return redirect(url_for('admin_dashboard'))
 
