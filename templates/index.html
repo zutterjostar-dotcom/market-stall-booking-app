@@ -4,12 +4,14 @@
 
 {% block content %}
 <h1 class="mb-4 market-title">ผังแผงตลาด</h1>
+<p class="text-center text-muted mb-4">
+    แผงตลาดมาตรฐาน เหมาะสำหรับสินค้าทั่วไป
+</p>
 
 <div class="stall-map-container">
     {% for item in stalls_with_status %}
     <a href="{{ url_for('book_stall', stall_id=item.stall.id) }}" class="stall-box {% if item.status == 'available' %}stall-available{% elif item.status == 'occupied' %}stall-occupied{% else %}stall-pending{% endif %}">
         <strong>{{ item.stall.name }}</strong>
-        <p class="text-muted">{{ item.stall.description }}</p>
         <span class="stall-status-text">{{ 'ว่าง' if item.status == 'available' else 'ไม่ว่าง' if item.status == 'occupied' else 'รอการอนุมัติ' }}</span>
     </a>
     {% endfor %}

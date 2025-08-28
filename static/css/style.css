@@ -91,6 +91,11 @@ body {
     transform: translateY(-5px);
 }
 
+.stall-box strong {
+    font-size: 1.25rem;
+    margin-bottom: 5px;
+}
+
 .stall-available {
     background-color: #e9f5e9; /* สีเขียวอ่อน */
     border: 2px solid #28a745; /* ขอบสีเขียว */
@@ -108,5 +113,5 @@ body {
 
 .stall-status-text {
     font-weight: bold;
-    margin-top: 10px;
+    margin-top: 5px;
 }
