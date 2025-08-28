@@ -1,41 +1,32 @@
+# Import Libraries
+import os
+from datetime import datetime, date
+from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-import datetime
-import os
-from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-#from datetime import date
-from flask_login import current_user
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 
-
+# Initial Flask app and database
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_super_secret_key_here'
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///market.db'
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER) 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 db = SQLAlchemy(app)
 
+# Login manager setup
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -53,10 +44,11 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# Database models
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
-    password = db.Column(db.String(80), nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='vendor')
 
     @property
@@ -87,7 +79,7 @@ class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     vendor_name = db.Column(db.String(100), nullable=False)
     vendor_phone = db.Column(db.String(20), nullable=False)
-    vendor_email = db.Column(db.String(100), nullable=True) # Changed to nullable
+    vendor_email = db.Column(db.String(100), nullable=True) 
     stall_id = db.Column(db.Integer, db.ForeignKey('stall.id'), nullable=False)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
@@ -99,28 +91,17 @@ class Booking(db.Model):
     def __repr__(self):
         return f'<Booking {self.id} - {self.vendor_name} for Stall {self.stall.name}>'
 
-from functools import wraps
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'logged_in' not in session or session.get('role') != 'admin':
-            flash('กรุณาเข้าสู่ระบบด้วยบัญชี Admin เพื่อเข้าถึงหน้านี้', 'danger')
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
+# Routes
 @app.route('/')
 def index():
-    today = datetime.datetime.now().date()
+    today = date.today()
     stalls = Stall.query.all()
     stalls_with_status = []
     for stall in stalls:
-        # ตรวจสอบการจองที่ยังไม่สิ้นสุด
-        booking = Booking.query.filter_by(
-            stall_id=stall.id,
-            start_date=today,
-            end_date=today
+        booking = Booking.query.filter(
+            Booking.stall_id == stall.id,
+            Booking.start_date <= today,
+            Booking.end_date >= today
         ).first()
 
         status = 'available'
@@ -141,7 +122,7 @@ def index():
 @app.route('/book/<int:stall_id>', methods=['GET', 'POST'])
 def book_stall(stall_id):
     stall = Stall.query.get_or_404(stall_id)
-    today = datetime.datetime.now().date()
+    today = date.today()
     
     today_booking = Booking.query.filter_by(
         stall_id=stall_id,
@@ -196,8 +177,8 @@ def login():
         password = request.form['password']
 
         user = User.query.filter_by(username=username).first()
-        if user and user.verify_password(password):
-            login_user(user) # ใช้ login_user จาก Flask-Login
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
             flash('เข้าสู่ระบบสำเร็จ!', 'success')
             return redirect(url_for('admin_dashboard'))
         else:
@@ -207,7 +188,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    logout_user() # ใช้ logout_user จาก Flask-Login
+    logout_user()
     flash('ออกจากระบบแล้ว', 'info')
     return redirect(url_for('index'))
 
@@ -222,7 +203,7 @@ def update_booking_status(booking_id):
     booking = Booking.query.get_or_404(booking_id)
     new_status = request.form.get('status')
 
-    if new_status in ['confirmed', 'rejected']:
+    if new_status in ['approved', 'rejected']:
         booking.status = new_status
         try:
             db.session.commit()
@@ -241,7 +222,7 @@ def pay_booking(booking_id):
     booking = Booking.query.get_or_404(booking_id)
 
     if request.method == 'POST':
-        if booking.status in ['confirmed', 'pending']:
+        if booking.status in ['approved', 'pending']:
             booking.status = 'paid'
             try:
                 db.session.commit()
@@ -386,7 +367,7 @@ def cancel_booking(booking_id):
     return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':
-     with app.app_context():
+      with app.app_context():
         db.create_all()
         db.session.query(User).delete()
         new_admin = User(username='admin', role='admin')
