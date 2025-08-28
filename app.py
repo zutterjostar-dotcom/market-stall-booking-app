@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
-#from datetime import datetime
+from datetime import datetime
 import datetime
 import os
 from functools import wraps
@@ -115,26 +115,40 @@ def admin_required(f):
 
 from datetime import date
 
+# โค้ดส่วนอื่นๆ
+from datetime import datetime
+
+# ...
+# โค้ดส่วนอื่นๆ
+
 @app.route('/')
 def index():
     today = datetime.date.today()
-    all_stalls = Stall.query.order_by(Stall.id).all()
-
+    stalls = Stall.query.all()
     stalls_with_status = []
-    for stall in all_stalls:
-        booking_for_today = Booking.query.filter(
-            Booking.stall_id == stall.id,
-            Booking.status.in_(['confirmed']),
-            Booking.start_date <= today,
-            Booking.end_date >= today
+    for stall in stalls:
+        # ตรวจสอบการจองในวันปัจจุบัน
+        booking = Booking.query.filter_by(
+            stall_id=stall.id,
+            start_date=today,
+            end_date=today
         ).first()
 
-        if booking_for_today:
-            stalls_with_status.append({'stall': stall, 'status': 'occupied'})
-        else:
-            stalls_with_status.append({'stall': stall, 'status': 'available'})
+        status = 'available'
+        if booking:
+            if booking.status == 'approved':
+                status = 'occupied'
+            elif booking.status == 'pending':
+                status = 'pending'
+            else:
+                status = 'occupied'
 
-    return render_template('index.html', stalls_with_status=stalls_with_status, today=today, current_user=current_user)
+        stalls_with_status.append({'stall': stall, 'status': status})
+        
+    return render_template(
+        'index.html', 
+        stalls_with_status=stalls_with_status
+    )
 
 # โค้ดส่วนอื่นๆ ที่เกี่ยวข้องกับการจองแผง
 @app.route('/book/<int:stall_id>', methods=['GET', 'POST'])
