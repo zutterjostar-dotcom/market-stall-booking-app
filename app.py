@@ -1,12 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+#from datetime import datetime
 import datetime
 import os
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date
+#from datetime import date
 from flask_login import current_user
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 
@@ -142,7 +142,7 @@ def book_stall(stall_id):
     stall = Stall.query.get_or_404(stall_id)
     today = datetime.date.today()
     
-    # ดึงข้อมูลการจองสำหรับวันนี้
+    # ตรวจสอบว่ามีข้อมูลการจองสำหรับวันนี้อยู่แล้วหรือไม่
     today_booking = Booking.query.filter_by(
         stall_id=stall_id,
         start_date=today,
