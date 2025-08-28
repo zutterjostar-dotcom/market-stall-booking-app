@@ -136,80 +136,58 @@ def index():
     return render_template('index.html', stalls_with_status=stalls_with_status, today=today, current_user=current_user)
 
 
+# โค้ดส่วนอื่นๆ ที่เกี่ยวข้องกับการจองแผง
 @app.route('/book/<int:stall_id>', methods=['GET', 'POST'])
 def book_stall(stall_id):
     stall = Stall.query.get_or_404(stall_id)
-    today = date.today()
+    today = datetime.date.today()
+    
+    # ดึงข้อมูลการจองสำหรับวันนี้
+    today_booking = Booking.query.filter_by(
+        stall_id=stall_id,
+        booking_date=today
+    ).first()
 
     if request.method == 'POST':
         vendor_name = request.form['vendor_name']
         vendor_phone = request.form['vendor_phone']
-        vendor_email = request.form.get('vendor_email') 
-        start_date_str = request.form['start_date']
-        end_date_str = request.form['end_date']
-        image_file = request.files.get('image_file') 
+        vendor_email = request.form['vendor_email']
+        
+        # ตั้งค่า start_date และ end_date เป็นวันปัจจุบันโดยอัตโนมัติ
+        start_date = today
+        end_date = today
 
+        # ดำเนินการจองต่อ...
         try:
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-        except ValueError:
-            flash('รูปแบบวันที่ไม่ถูกต้อง', 'danger')
-            return redirect(url_for('book_stall', stall_id=stall.id))
-
-        if start_date > end_date:
-            flash('วันที่สิ้นสุดการจองต้องไม่ก่อนวันที่เริ่มต้น', 'danger')
-            return redirect(url_for('book_stall', stall_id=stall.id))
-
-        number_of_days = (end_date - start_date).days + 1
-        total_price = number_of_days * stall.price_per_day
-
-        image_url = None
-        if image_file and allowed_file(image_file.filename):
-            filename = secure_filename(image_file.filename)
-            unique_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-            image_file.save(file_path)
-            image_url = url_for('static', filename=f'uploads/{unique_filename}')
-        elif image_file and not allowed_file(image_file.filename):
-            flash('ประเภทไฟล์รูปภาพไม่ถูกต้อง อนุญาตเฉพาะ PNG, JPG, JPEG, GIF', 'danger')
-            return redirect(url_for('book_stall', stall_id=stall.id))
-
-
-        overlapping_bookings = Booking.query.filter(
-            Booking.stall_id == stall.id,
-            Booking.status.in_(['pending', 'confirmed']), 
-            Booking.start_date <= end_date,
-            Booking.end_date >= start_date
-        ).all()
-
-        if overlapping_bookings:
-            flash('แผงนี้ไม่ว่างในช่วงวันที่คุณเลือก กรุณาเลือกวันอื่น', 'danger')
-            return redirect(url_for('book_stall', stall_id=stall.id))
-
-
-        new_booking = Booking(
-            vendor_name=vendor_name,
-            vendor_phone=vendor_phone,
-            vendor_email=vendor_email,
-            #image_url=image_url,#
-            stall_id=stall.id,
-            start_date=start_date,
-            end_date=end_date,
-            total_price=total_price,
-            status='pending'
-        )
-
-        try:
+            # ตรวจสอบว่ามีข้อมูลการจองสำหรับวันนี้อยู่แล้วหรือไม่
+            if today_booking:
+                flash('แผงตลาดนี้ถูกจองแล้วสำหรับวันนี้', 'danger')
+                return redirect(url_for('index'))
+            
+            # สร้างรายการจองใหม่
+            new_booking = Booking(
+                vendor_name=vendor_name,
+                vendor_phone=vendor_phone,
+                vendor_email=vendor_email,
+                stall_id=stall_id,
+                booking_date=today,
+                start_date=start_date,
+                end_date=end_date,
+                status="pending"
+            )
+            
+            # เพิ่มการจองใหม่ลงในฐานข้อมูล
             db.session.add(new_booking)
             db.session.commit()
-            flash('การจองสำเร็จแล้ว! กรุณาอัปโหลดหลักฐานการชำระเงิน', 'success')
-            # เปลี่ยนเส้นทางไปยังหน้าการชำระเงิน
-            return redirect(url_for('payment', booking_id=new_booking.id))
+            
+            return redirect(url_for('payment_page', booking_id=new_booking.id))
+        
         except Exception as e:
             db.session.rollback()
-            flash(f'เกิดข้อผิดพลาดในการจอง: {e}', 'danger')
+            flash(f'เกิดข้อผิดพลาดในการจอง: {str(e)}', 'danger')
+            return redirect(url_for('book_stall', stall_id=stall_id))
 
-    return render_template('book.html', stall=stall, today=today)
+    return render_template('book.html', stall=stall, today_booking=today_booking)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
