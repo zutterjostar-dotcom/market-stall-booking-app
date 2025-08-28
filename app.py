@@ -135,7 +135,6 @@ def index():
 
     return render_template('index.html', stalls_with_status=stalls_with_status, today=today, current_user=current_user)
 
-
 # โค้ดส่วนอื่นๆ ที่เกี่ยวข้องกับการจองแผง
 @app.route('/book/<int:stall_id>', methods=['GET', 'POST'])
 def book_stall(stall_id):
@@ -151,13 +150,11 @@ def book_stall(stall_id):
     if request.method == 'POST':
         vendor_name = request.form['vendor_name']
         vendor_phone = request.form['vendor_phone']
-        vendor_email = request.form['vendor_email']
         
         # ตั้งค่า start_date และ end_date เป็นวันปัจจุบันโดยอัตโนมัติ
         start_date = today
         end_date = today
 
-        # ดำเนินการจองต่อ...
         try:
             # ตรวจสอบว่ามีข้อมูลการจองสำหรับวันนี้อยู่แล้วหรือไม่
             if today_booking:
@@ -168,9 +165,7 @@ def book_stall(stall_id):
             new_booking = Booking(
                 vendor_name=vendor_name,
                 vendor_phone=vendor_phone,
-                vendor_email=vendor_email,
                 stall_id=stall_id,
-                booking_date=today,
                 start_date=start_date,
                 end_date=end_date,
                 status="pending"
@@ -180,13 +175,16 @@ def book_stall(stall_id):
             db.session.add(new_booking)
             db.session.commit()
             
-            return redirect(url_for('payment_page', booking_id=new_booking.id))
+            # ส่งผู้ใช้ไปยังหน้ายืนยันการจอง
+            flash('การจองสำเร็จ! กรุณารอการตรวจสอบจากผู้ดูแล', 'success')
+            return redirect(url_for('success'))
         
         except Exception as e:
             db.session.rollback()
             flash(f'เกิดข้อผิดพลาดในการจอง: {str(e)}', 'danger')
             return redirect(url_for('book_stall', stall_id=stall_id))
-
+    
+    # หากเป็น GET request ให้แสดงหน้า book.html
     return render_template('book.html', stall=stall, today_booking=today_booking)
 
 @app.route('/login', methods=['GET', 'POST'])
