@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import datetime
 import os
 from functools import wraps
 from werkzeug.utils import secure_filename
@@ -116,7 +117,7 @@ from datetime import date
 
 @app.route('/')
 def index():
-    today = date.today()
+    today = datetime.date.today()
     all_stalls = Stall.query.order_by(Stall.id).all()
 
     stalls_with_status = []
