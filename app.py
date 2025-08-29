@@ -331,14 +331,14 @@ def upload_payment(booking_id):
             filename = secure_filename(file.filename)
 
             # *** แก้ไข: สร้างเส้นทางสำหรับบันทึกไฟล์ ***
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
 
             # *** แก้ไข: บันทึกไฟล์ลงในโฟลเดอร์ uploads ***
             file.save(file_path)
 
             # อัปเดตข้อมูลในฐานข้อมูล
             booking.payment_proof = filename
-            booking.status = 'pending_verification'
+            booking.status = 'pending'
             db.session.commit()
 
             flash('อัปโหลดหลักฐานสำเร็จแล้ว รอการอนุมัติจากผู้ดูแลระบบ', 'success')
