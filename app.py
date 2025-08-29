@@ -332,7 +332,7 @@ def upload_payment(booking_id):
         if '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions:
             # บันทึกไฟล์ลงในโฟลเดอร์ uploads และอัปเดตสถานะการจอง
             filename = secure_filename(f'{booking_id}_{file.filename}')
-            upload_folder = 'uploads'
+            upload_folder = 'static/uploads'
             os.makedirs(upload_folder, exist_ok=True)
             file.save(os.path.join(upload_folder, filename))
 
