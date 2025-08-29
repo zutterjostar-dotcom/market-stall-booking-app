@@ -154,8 +154,8 @@ def book_stall(stall_id):
             db.session.add(new_booking) 
             db.session.commit() 
              
-            flash('การจองสำเร็จ! กรุณารอการตรวจสอบจากผู้ดูแล', 'success') 
-            return redirect(url_for('index')) 
+            flash('การจองสำเร็จ! กรุณาอัปโหลดหลักฐานการชำระเงิน', 'success')
+            return redirect(url_for('upload_payment', booking_id=new_booking.id))
          
         except Exception as e: 
             db.session.rollback() 
