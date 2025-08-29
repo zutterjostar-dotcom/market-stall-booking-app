@@ -94,35 +94,31 @@ def index():
     stalls_with_status = []
     
     for stall in stalls:
-        # 1. ตรวจสอบว่ามี booking ที่ได้รับการอนุมัติหรือไม่
-        approved_booking = Booking.query.filter(
+        # ค้นหาการจองทั้งหมดที่เกี่ยวข้องกับแผงในวันนี้
+        all_bookings = Booking.query.filter(
             Booking.stall_id == stall.id,
             Booking.start_date <= today,
-            Booking.end_date >= today,
-            Booking.status == 'approved'
-        ).first()
+            Booking.end_date >= today
+        ).all()
 
-        # 2. ตรวจสอบว่ามี booking ที่อยู่ในสถานะรอการอนุมัติหรือไม่
-        pending_booking = Booking.query.filter(
-            Booking.stall_id == stall.id,
-            Booking.start_date <= today,
-            Booking.end_date >= today,
-            Booking.status.in_(['pending', 'pending_verification'])
-        ).first()
-        
+        # กำหนดสถานะเริ่มต้นเป็น 'ว่าง'
         status = 'ว่าง'
-        if approved_booking:
-            status = 'ไม่ว่าง'
-        elif pending_booking:
-            status = 'รอการอนุมัติ'
-
+        
+        # ลูปผ่านการจองทั้งหมดเพื่อตรวจสอบสถานะ
+        for booking in all_bookings:
+            if booking.status == 'approved':
+                status = 'ไม่ว่าง'
+                break  # ถ้าเจอการจองที่อนุมัติแล้ว ไม่ต้องตรวจสอบการจองอื่นอีก
+            elif booking.status in ['pending', 'pending_verification']:
+                status = 'รอการอนุมัติ'
+                # ไม่ต้อง break เพราะอาจมีสถานะ approved ตามมาใน booking อื่น
+        
         stalls_with_status.append({'stall': stall, 'status': status})
         
     return render_template(
         'index.html', 
         stalls_with_status=stalls_with_status
     )
-
 @app.route('/book/<int:stall_id>', methods=['GET', 'POST']) 
 def book_stall(stall_id): 
     stall = Stall.query.get_or_404(stall_id) 
