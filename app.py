@@ -1,4 +1,3 @@
-# Import Libraries
 import os
 from datetime import datetime, date
 from functools import wraps
@@ -8,7 +7,6 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 
-# Initial Flask app and database
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_super_secret_key_here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///market.db'
@@ -26,7 +24,6 @@ def allowed_file(filename):
 
 db = SQLAlchemy(app)
 
-# Login manager setup
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -44,7 +41,6 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Database models
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
