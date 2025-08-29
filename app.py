@@ -87,7 +87,6 @@ class Booking(db.Model):
     def __repr__(self):
         return f'<Booking {self.id} - {self.vendor_name} for Stall {self.stall.name}>'
 
-# Routes
 @app.route('/')
 def index():
     today = date.today()
