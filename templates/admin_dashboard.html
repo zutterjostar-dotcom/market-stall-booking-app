@@ -65,8 +65,6 @@
                 <td>
                     {% if booking.status == 'pending' %}
                         <span class="badge bg-warning text-dark">รอการอนุมัติ</span>
-                    {% elif booking.status == 'pending_verification' %}
-                        <span class="badge bg-warning text-dark">รอการตรวจสอบ</span>
                     {% elif booking.status == 'confirmed' %}
                         <span class="badge bg-success">ยืนยันแล้ว</span>
                     {% elif booking.status == 'rejected' %}
@@ -76,8 +74,8 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if booking.payment_proof_url %}
-                        <a href="{{ booking.payment_proof_url }}" target="_blank" class="btn btn-sm btn-info">ดูหลักฐาน</a>
+                    {% if booking.payment_proof %}
+                        <a href="{{ url_for('static', filename='uploads/' + booking.payment_proof) }}" target="_blank" class="btn btn-sm btn-info">ดูหลักฐาน</a>
                     {% else %}
                         ไม่มี
                     {% endif %}
