@@ -124,7 +124,7 @@ def book_stall(stall_id):
         Booking.stall_id == stall_id, 
         Booking.start_date <= today, 
         Booking.end_date >= today,
-        Booking.status == 'approved'
+        Booking.status.in_(['approved', 'pending', 'pending_verification'])
     ).first() 
 
     if request.method == 'POST': 
