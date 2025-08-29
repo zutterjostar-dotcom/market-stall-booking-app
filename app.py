@@ -97,7 +97,8 @@ def index():
         booking = Booking.query.filter(
             Booking.stall_id == stall.id,
             Booking.start_date <= today,
-            Booking.end_date >= today
+            Booking.end_date >= today,
+            Booking.status == 'approved'
         ).first()
 
         status = 'available'
@@ -107,7 +108,7 @@ def index():
             elif booking.status == 'pending':
                 status = 'pending'
             else:
-                status = 'occupied'
+                status = 'available'
         
         stalls_with_status.append({'stall': stall, 'status': status})
     return render_template(
