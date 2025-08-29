@@ -11,6 +11,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_super_secret_key_here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///market.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
@@ -315,36 +316,33 @@ def upload_payment(booking_id):
     booking = Booking.query.get_or_404(booking_id)
 
     if request.method == 'POST':
-        # ตรวจสอบว่ามีไฟล์ที่อัปโหลดหรือไม่
         if 'payment_proof' not in request.files:
-            flash('กรุณาเลือกไฟล์หลักฐานการชำระเงิน', 'danger')
-            return redirect(request.url)
+            flash('ไม่พบไฟล์ที่อัปโหลด', 'danger')
+            return redirect(url_for('upload_payment', booking_id=booking_id))
 
         file = request.files['payment_proof']
-        
-        # ตรวจสอบว่าผู้ใช้ไม่ได้เลือกไฟล์
-        if file.filename == '':
-            flash('กรุณาเลือกไฟล์หลักฐานการชำระเงิน', 'danger')
-            return redirect(request.url)
-            
-        # ตรวจสอบประเภทไฟล์
-        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
-        if '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions:
-            # บันทึกไฟล์ลงในโฟลเดอร์ uploads และอัปเดตสถานะการจอง
-            filename = secure_filename(f'{booking_id}_{file.filename}')
-            upload_folder = 'static/uploads'
-            os.makedirs(upload_folder, exist_ok=True)
-            file.save(os.path.join(upload_folder, filename))
 
+        if file.filename == '':
+            flash('ไม่ได้เลือกไฟล์', 'danger')
+            return redirect(url_for('upload_payment', booking_id=booking_id))
+
+        if file:
+            # สร้างชื่อไฟล์ที่ไม่ซ้ำกัน
+            filename = secure_filename(file.filename)
+
+            # *** แก้ไข: สร้างเส้นทางสำหรับบันทึกไฟล์ ***
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+            # *** แก้ไข: บันทึกไฟล์ลงในโฟลเดอร์ uploads ***
+            file.save(file_path)
+
+            # อัปเดตข้อมูลในฐานข้อมูล
             booking.payment_proof = filename
-            booking.status = 'pending'  # เปลี่ยนสถานะเพื่อรอการตรวจสอบ
+            booking.status = 'pending_verification'
             db.session.commit()
 
-            flash('อัปโหลดหลักฐานการชำระเงินสำเร็จ! กรุณารอการตรวจสอบจากผู้ดูแล', 'success')
+            flash('อัปโหลดหลักฐานสำเร็จแล้ว รอการอนุมัติจากผู้ดูแลระบบ', 'success')
             return redirect(url_for('index'))
-        else:
-            flash('ไฟล์ที่อัปโหลดต้องเป็นรูปภาพ (png, jpg, jpeg, gif)', 'danger')
-            return redirect(request.url)
 
     return render_template('upload_payment.html', booking=booking)
 
