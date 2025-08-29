@@ -87,6 +87,7 @@ class Booking(db.Model):
     def __repr__(self):
         return f'<Booking {self.id} - {self.vendor_name} for Stall {self.stall.name}>'
 
+# --- แก้ไขฟังก์ชัน index() ---
 @app.route('/')
 def index():
     today = date.today()
@@ -94,10 +95,10 @@ def index():
     stalls_with_status = []
     
     for stall in stalls:
-        # กำหนดค่าเริ่มต้นของสถานะให้เป็น 'ว่าง'
+        # กำหนดค่าเริ่มต้นของสถานะเป็น 'ว่าง'
         status = 'ว่าง'
-        
-        # 1. ตรวจสอบการจองที่มีสถานะอนุมัติ (approved)
+
+        # ตรวจสอบการจองที่มีสถานะ 'approved' ก่อน
         approved_booking = Booking.query.filter(
             Booking.stall_id == stall.id,
             Booking.start_date <= today,
@@ -108,14 +109,13 @@ def index():
         if approved_booking:
             status = 'ไม่ว่าง'
         else:
-            # 2. ถ้าไม่มีการจองที่อนุมัติ ให้ตรวจสอบการจองที่รอการอนุมัติ (pending)
+            # ถ้าไม่มีการจองที่อนุมัติแล้ว ให้ตรวจสอบการจองที่รออนุมัติ
             pending_booking = Booking.query.filter(
                 Booking.stall_id == stall.id,
                 Booking.start_date <= today,
                 Booking.end_date >= today,
                 Booking.status.in_(['pending', 'pending_verification'])
             ).first()
-
             if pending_booking:
                 status = 'รอการอนุมัติ'
 
@@ -126,55 +126,59 @@ def index():
         stalls_with_status=stalls_with_status
     )
 
-@app.route('/book/<int:stall_id>', methods=['GET', 'POST']) 
-def book_stall(stall_id): 
-    stall = Stall.query.get_or_404(stall_id) 
-    today = date.today() 
-     
-    # แก้ไขโค้ดส่วนนี้ให้ตรวจสอบเฉพาะสถานะ 'approved' เท่านั้น
-    today_booking = Booking.query.filter( 
-        Booking.stall_id == stall_id, 
-        Booking.start_date <= today, 
+# --- แก้ไขฟังก์ชัน book_stall() ---
+@app.route('/book/<int:stall_id>', methods=['GET', 'POST'])
+def book_stall(stall_id):
+    stall = Stall.query.get_or_404(stall_id)
+    today = date.today()
+    
+    # ตรวจสอบว่าแผงมีการจองที่ 'approved' หรือ 'pending' แล้วหรือยัง
+    existing_booking = Booking.query.filter(
+        Booking.stall_id == stall_id,
+        Booking.start_date <= today,
         Booking.end_date >= today,
-        Booking.status == 'approved'
-    ).first() 
+        Booking.status.in_(['approved', 'pending', 'pending_verification'])
+    ).first()
 
-    if request.method == 'POST': 
-        vendor_name = request.form.get('vendor_name') 
-        vendor_phone = request.form.get('vendor_phone') 
-        vendor_email = request.form.get('vendor_email') 
-         
-        start_date = today 
-        end_date = today 
+    if request.method == 'POST':
+        vendor_name = request.form.get('vendor_name')
+        vendor_phone = request.form.get('vendor_phone')
+        vendor_email = request.form.get('vendor_email')
+        
+        start_date = today
+        end_date = today
 
-        try: 
-            if today_booking: 
-                flash('แผงตลาดนี้ถูกจองแล้วสำหรับวันนี้', 'danger') 
-                return redirect(url_for('index')) 
-             
-            new_booking = Booking( 
-                vendor_name=vendor_name, 
-                vendor_phone=vendor_phone, 
-                vendor_email=vendor_email, 
-                stall_id=stall_id, 
-                start_date=start_date, 
-                end_date=end_date, 
-                total_price=stall.price_per_day, 
-                status="pending" 
-            ) 
-             
-            db.session.add(new_booking) 
-            db.session.commit() 
-             
-            flash('การจองสำเร็จ! กรุณารอการตรวจสอบจากผู้ดูแล', 'success') 
-            return redirect(url_for('index')) 
-         
-        except Exception as e: 
-            db.session.rollback() 
-            flash(f'เกิดข้อผิดพลาดในการจอง: {str(e)}', 'danger') 
-            return redirect(url_for('book_stall', stall_id=stall_id)) 
-     
-    return render_template('book.html', stall=stall, today_booking=today_booking)
+        try:
+            if existing_booking:
+                if existing_booking.status == 'approved':
+                    flash('แผงตลาดนี้ไม่ว่างแล้วสำหรับวันนี้', 'danger')
+                elif existing_booking.status.in_(['pending', 'pending_verification']):
+                    flash('แผงตลาดนี้อยู่ในระหว่างรอการอนุมัติ กรุณารอการตรวจสอบ', 'info')
+                return redirect(url_for('index'))
+            
+            new_booking = Booking(
+                vendor_name=vendor_name,
+                vendor_phone=vendor_phone,
+                vendor_email=vendor_email,
+                stall_id=stall_id,
+                start_date=start_date,
+                end_date=end_date,
+                total_price=stall.price_per_day,
+                status="pending"
+            )
+            
+            db.session.add(new_booking)
+            db.session.commit()
+            
+            flash('การจองสำเร็จ! กรุณารอการตรวจสอบจากผู้ดูแล', 'success')
+            return redirect(url_for('index'))
+        
+        except Exception as e:
+            db.session.rollback()
+            flash(f'เกิดข้อผิดพลาดในการจอง: {str(e)}', 'danger')
+            return redirect(url_for('book_stall', stall_id=stall_id))
+    
+    return render_template('book.html', stall=stall, existing_booking=existing_booking)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
