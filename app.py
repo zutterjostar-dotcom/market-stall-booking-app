@@ -107,7 +107,7 @@ def index():
             elif booking.status == 'pending':
                 status = 'pending'
             else:
-                status = 'occupied' 
+                status = 'available' 
         
         stalls_with_status.append({'stall': stall, 'status': status})
     return render_template(
