@@ -83,13 +83,14 @@
                 <td>
                     {% if booking.status == 'pending' %}
                         <form action="{{ url_for('update_booking_status', booking_id=booking.id) }}" method="post" style="display:inline;">
-                            <input type="hidden" name="status" value="confirmed">
-                            <button type="submit" class="btn btn-sm btn-success">อนุมัติ</button>
-                        </form>
-                        <form action="{{ url_for('update_booking_status', booking_id=booking.id) }}" method="post" style="display:inline;">
-                            <input type="hidden" name="status" value="rejected">
-                            <button type="submit" class="btn btn-sm btn-danger">ปฏิเสธ</button>
-                        </form>
+    <input type="hidden" name="status" value="approved">
+    <button type="submit" class="btn btn-success btn-sm">อนุมัติ</button>
+</form>
+
+<form action="{{ url_for('update_booking_status', booking_id=booking.id) }}" method="post" style="display:inline;">
+    <input type="hidden" name="status" value="rejected">
+    <button type="submit" class="btn btn-danger btn-sm">ปฏิเสธ</button>
+</form>
                     {% endif %}
                 </td>
             </tr>
