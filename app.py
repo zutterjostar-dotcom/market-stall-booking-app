@@ -94,9 +94,7 @@ def index():
     stalls_with_status = []
     
     for stall in stalls:
-        status = 'ว่าง'  # กำหนดค่าเริ่มต้นเป็น 'ว่าง' เสมอ
-        
-        # ค้นหาการจองที่ได้รับการอนุมัติก่อน
+        # 1. ตรวจสอบว่ามี booking ที่ได้รับการอนุมัติหรือไม่
         approved_booking = Booking.query.filter(
             Booking.stall_id == stall.id,
             Booking.start_date <= today,
@@ -104,21 +102,19 @@ def index():
             Booking.status == 'approved'
         ).first()
 
-        # ถ้ามีการจองที่ได้รับการอนุมัติ สถานะจะเป็น 'ไม่ว่าง'
+        # 2. ตรวจสอบว่ามี booking ที่อยู่ในสถานะรอการอนุมัติหรือไม่
+        pending_booking = Booking.query.filter(
+            Booking.stall_id == stall.id,
+            Booking.start_date <= today,
+            Booking.end_date >= today,
+            Booking.status.in_(['pending', 'pending_verification'])
+        ).first()
+        
+        status = 'ว่าง'
         if approved_booking:
             status = 'ไม่ว่าง'
-        else:
-            # ถ้าไม่มีการจองที่ได้รับการอนุมัติ ให้ตรวจสอบการจองที่ 'รอการอนุมัติ'
-            pending_booking = Booking.query.filter(
-                Booking.stall_id == stall.id,
-                Booking.start_date <= today,
-                Booking.end_date >= today,
-                Booking.status.in_(['pending', 'pending_verification'])
-            ).first()
-
-            # ถ้ามีการจองที่รออนุมัติ สถานะจะเป็น 'รอการอนุมัติ'
-            if pending_booking:
-                status = 'รอการอนุมัติ'
+        elif pending_booking:
+            status = 'รอการอนุมัติ'
 
         stalls_with_status.append({'stall': stall, 'status': status})
         
