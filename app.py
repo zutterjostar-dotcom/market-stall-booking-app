@@ -80,9 +80,9 @@ class Booking(db.Model):
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     total_price = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), nullable=False)
+    status = db.Column(db.String(50), default='pending')
     booked_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    payment_proof_url = db.Column(db.String(200), nullable=True)
+    payment_proof = db.Column(db.String(255), nullable=True)
 
     def __repr__(self):
         return f'<Booking {self.id} - {self.vendor_name} for Stall {self.stall.name}>'
@@ -131,7 +131,7 @@ def book_stall(stall_id):
         vendor_name = request.form.get('vendor_name') 
         vendor_phone = request.form.get('vendor_phone') 
         vendor_email = request.form.get('vendor_email') 
-         
+
         start_date = today 
         end_date = today 
 
@@ -310,40 +310,43 @@ def payment(booking_id):
     booking = Booking.query.get_or_404(booking_id)
     return render_template('payment.html', booking=booking)
 
-@app.route('/upload-payment-proof/<int:booking_id>', methods=['POST'])
-def upload_payment_proof(booking_id):
+@app.route('/upload_payment/<int:booking_id>', methods=['GET', 'POST'])
+def upload_payment(booking_id):
     booking = Booking.query.get_or_404(booking_id)
 
-    if 'payment_proof' not in request.files:
-        flash('ไม่พบไฟล์หลักฐานการชำระเงิน', 'danger')
-        return redirect(url_for('payment', booking_id=booking.id))
+    if request.method == 'POST':
+        # ตรวจสอบว่ามีไฟล์ที่อัปโหลดหรือไม่
+        if 'payment_proof' not in request.files:
+            flash('กรุณาเลือกไฟล์หลักฐานการชำระเงิน', 'danger')
+            return redirect(request.url)
 
-    file = request.files['payment_proof']
+        file = request.files['payment_proof']
+        
+        # ตรวจสอบว่าผู้ใช้ไม่ได้เลือกไฟล์
+        if file.filename == '':
+            flash('กรุณาเลือกไฟล์หลักฐานการชำระเงิน', 'danger')
+            return redirect(request.url)
+            
+        # ตรวจสอบประเภทไฟล์
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+        if '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions:
+            # บันทึกไฟล์ลงในโฟลเดอร์ uploads และอัปเดตสถานะการจอง
+            filename = secure_filename(f'{booking_id}_{file.filename}')
+            upload_folder = 'static/uploads'
+            os.makedirs(upload_folder, exist_ok=True)
+            file.save(os.path.join(upload_folder, filename))
 
-    if file.filename == '':
-        flash('ไม่ได้เลือกไฟล์', 'danger')
-        return redirect(url_for('payment', booking_id=booking.id))
-
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filename = f"payment_{booking.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-
-        booking.payment_proof_url = url_for('static', filename=f'uploads/{filename}')
-        booking.status = 'pending_verification'
-
-        try:
+            booking.payment_proof = filename
+            booking.status = 'pending_verification'  # เปลี่ยนสถานะเพื่อรอการตรวจสอบ
             db.session.commit()
-            flash('อัปโหลดหลักฐานการชำระเงินสำเร็จแล้ว! เจ้าหน้าที่จะทำการตรวจสอบและยืนยันการจองของคุณ', 'success')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'เกิดข้อผิดพลาดในการบันทึกข้อมูล: {e}', 'danger')
 
-    else:
-        flash('ประเภทไฟล์ไม่ถูกต้อง (อนุญาตเฉพาะ PNG, JPG, JPEG, GIF)', 'danger')
+            flash('อัปโหลดหลักฐานการชำระเงินสำเร็จ! กรุณารอการตรวจสอบจากผู้ดูแล', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('ไฟล์ที่อัปโหลดต้องเป็นรูปภาพ (png, jpg, jpeg, gif)', 'danger')
+            return redirect(request.url)
 
-    return redirect(url_for('index'))
+    return render_template('upload_payment.html', booking=booking)
 
 #@app.route('/admin/booking/<int:booking_id>/cancel', methods=['POST'])
 #@admin_required

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ชำระเงินค่าจองแผง</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>ชำระเงินค่าจองแผง</h1>
+        <hr>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">รายละเอียดการจอง</h5>
+                <p><strong>แผงที่:</strong> {{ booking.stall.number }}</p>
+                <p><strong>ผู้จอง:</strong> {{ booking.vendor_name }}</p>
+                <p><strong>ราคา:</strong> {{ "%.2f"|format(booking.total_price) }} บาท</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">การชำระเงินด้วย QR Code</h5>
+                        <p>สแกน QR Code เพื่อชำระเงิน</p>
+                        <img src="https://via.placeholder.com/200" alt="QR Code" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">การชำระเงินด้วยเลขบัญชี</h5>
+                        <p><strong>ธนาคาร:</strong> ธนาคารไทยพาณิชย์</p>
+                        <p><strong>เลขที่บัญชี:</strong> XXX-X-XXXXX-X</p>
+                        <p><strong>ชื่อบัญชี:</strong> นายตลาดดี</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h3 class="mt-4">แนบหลักฐานการชำระเงิน</h3>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="payment_proof">เลือกไฟล์รูปภาพหลักฐาน:</label>
+                <input type="file" class="form-control-file" id="payment_proof" name="payment_proof" required>
+            </div>
+            <button type="submit" class="btn btn-primary">อัปโหลด</button>
+        </form>
+    </div>
+</body>
+</html>
