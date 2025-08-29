@@ -337,7 +337,7 @@ def upload_payment(booking_id):
             file.save(os.path.join(upload_folder, filename))
 
             booking.payment_proof = filename
-            booking.status = 'pending_verification'  # เปลี่ยนสถานะเพื่อรอการตรวจสอบ
+            booking.status = 'pending'  # เปลี่ยนสถานะเพื่อรอการตรวจสอบ
             db.session.commit()
 
             flash('อัปโหลดหลักฐานการชำระเงินสำเร็จ! กรุณารอการตรวจสอบจากผู้ดูแล', 'success')
