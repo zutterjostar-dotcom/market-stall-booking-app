@@ -87,6 +87,7 @@ class Booking(db.Model):
     def __repr__(self):
         return f'<Booking {self.id} - {self.vendor_name} for Stall {self.stall.name}>'
 
+# --- แก้ไขฟังก์ชัน index() ---
 @app.route('/')
 def index():
     today = date.today()
@@ -94,27 +95,25 @@ def index():
     stalls_with_status = []
     
     for stall in stalls:
-        # 1. ตรวจสอบว่ามี booking ที่ได้รับการอนุมัติหรือไม่
-        approved_booking = Booking.query.filter(
-            Booking.stall_id == stall.id,
-            Booking.start_date <= today,
-            Booking.end_date >= today,
-            Booking.status == 'approved'
-        ).first()
-
-        # 2. ตรวจสอบว่ามี booking ที่อยู่ในสถานะรอการอนุมัติหรือไม่
-        pending_booking = Booking.query.filter(
-            Booking.stall_id == stall.id,
-            Booking.start_date <= today,
-            Booking.end_date >= today,
-            Booking.status.in_(['pending', 'pending_verification'])
-        ).first()
-        
+        # เริ่มต้นสถานะเป็น 'ว่าง'
         status = 'ว่าง'
-        if approved_booking:
+
+        # ค้นหาการจองทั้งหมดที่เกี่ยวข้องกับแผงในวันนี้
+        bookings_for_today = Booking.query.filter(
+            Booking.stall_id == stall.id,
+            Booking.start_date <= today,
+            Booking.end_date >= today
+        ).all()
+        
+        # ตรวจสอบสถานะการจองตามลำดับความสำคัญ
+        has_approved_booking = any(b.status == 'approved' for b in bookings_for_today)
+        has_pending_booking = any(b.status in ['pending', 'pending_verification'] for b in bookings_for_today)
+
+        if has_approved_booking:
             status = 'ไม่ว่าง'
-        elif pending_booking:
+        elif has_pending_booking:
             status = 'รอการอนุมัติ'
+        # ถ้าไม่มีการจองที่ได้รับการอนุมัติหรือรอการอนุมัติ สถานะจะยังคงเป็น 'ว่าง'
 
         stalls_with_status.append({'stall': stall, 'status': status})
         
@@ -149,7 +148,7 @@ def book_stall(stall_id):
             if existing_booking:
                 if existing_booking.status == 'approved':
                     flash('แผงตลาดนี้ไม่ว่างแล้วสำหรับวันนี้', 'danger')
-                elif existing_booking.status.in_(['pending', 'pending_verification']):
+                elif existing_booking.status in ['pending', 'pending_verification']:
                     flash('แผงตลาดนี้อยู่ในระหว่างรอการอนุมัติ กรุณารอการตรวจสอบ', 'info')
                 return redirect(url_for('index'))
             
