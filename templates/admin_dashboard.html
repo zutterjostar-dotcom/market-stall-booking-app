@@ -65,6 +65,8 @@
                 <td>
                     {% if booking.status == 'pending' %}
                         <span class="badge bg-warning text-dark">รอการอนุมัติ</span>
+                    {% elif booking.status == 'pending_verification' %}
+                        <span class="badge bg-warning text-dark">รอการตรวจสอบ</span>
                     {% elif booking.status == 'confirmed' %}
                         <span class="badge bg-success">ยืนยันแล้ว</span>
                     {% elif booking.status == 'rejected' %}
