@@ -116,52 +116,54 @@ def index():
         stalls_with_status=stalls_with_status
     )
 
-@app.route('/book/<int:stall_id>', methods=['GET', 'POST'])
-def book_stall(stall_id):
-    stall = Stall.query.get_or_404(stall_id)
-    today = date.today()
-    
-    today_booking = Booking.query.filter_by(
-        stall_id=stall_id,
-        start_date=today,
-        end_date=today
-    ).first()
+@app.route('/book/<int:stall_id>', methods=['GET', 'POST']) 
+def book_stall(stall_id): 
+    stall = Stall.query.get_or_404(stall_id) 
+    today = date.today() 
+     
+    # แก้ไขโค้ดส่วนนี้ให้ตรวจสอบเฉพาะสถานะ 'approved' เท่านั้น
+    today_booking = Booking.query.filter( 
+        Booking.stall_id == stall_id, 
+        Booking.start_date <= today, 
+        Booking.end_date >= today,
+        Booking.status == 'approved'
+    ).first() 
 
-    if request.method == 'POST':
-        vendor_name = request.form.get('vendor_name')
-        vendor_phone = request.form.get('vendor_phone')
-        vendor_email = request.form.get('vendor_email')
-        
-        start_date = today
-        end_date = today
+    if request.method == 'POST': 
+        vendor_name = request.form.get('vendor_name') 
+        vendor_phone = request.form.get('vendor_phone') 
+        vendor_email = request.form.get('vendor_email') 
+         
+        start_date = today 
+        end_date = today 
 
-        try:
-            if today_booking:
-                flash('แผงตลาดนี้ถูกจองแล้วสำหรับวันนี้', 'danger')
-                return redirect(url_for('index'))
-            
-            new_booking = Booking(
-                vendor_name=vendor_name,
-                vendor_phone=vendor_phone,
-                vendor_email=vendor_email,
-                stall_id=stall_id,
-                start_date=start_date,
-                end_date=end_date,
-                total_price=stall.price_per_day,
-                status="pending"
-            )
-            
-            db.session.add(new_booking)
-            db.session.commit()
-            
-            flash('การจองสำเร็จ! กรุณารอการตรวจสอบจากผู้ดูแล', 'success')
-            return redirect(url_for('index'))
-        
-        except Exception as e:
-            db.session.rollback()
-            flash(f'เกิดข้อผิดพลาดในการจอง: {str(e)}', 'danger')
-            return redirect(url_for('book_stall', stall_id=stall_id))
-    
+        try: 
+            if today_booking: 
+                flash('แผงตลาดนี้ถูกจองแล้วสำหรับวันนี้', 'danger') 
+                return redirect(url_for('index')) 
+             
+            new_booking = Booking( 
+                vendor_name=vendor_name, 
+                vendor_phone=vendor_phone, 
+                vendor_email=vendor_email, 
+                stall_id=stall_id, 
+                start_date=start_date, 
+                end_date=end_date, 
+                total_price=stall.price_per_day, 
+                status="pending" 
+            ) 
+             
+            db.session.add(new_booking) 
+            db.session.commit() 
+             
+            flash('การจองสำเร็จ! กรุณารอการตรวจสอบจากผู้ดูแล', 'success') 
+            return redirect(url_for('index')) 
+         
+        except Exception as e: 
+            db.session.rollback() 
+            flash(f'เกิดข้อผิดพลาดในการจอง: {str(e)}', 'danger') 
+            return redirect(url_for('book_stall', stall_id=stall_id)) 
+     
     return render_template('book.html', stall=stall, today_booking=today_booking)
 
 @app.route('/login', methods=['GET', 'POST'])
