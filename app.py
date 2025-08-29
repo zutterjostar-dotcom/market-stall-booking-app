@@ -87,36 +87,29 @@ class Booking(db.Model):
     def __repr__(self):
         return f'<Booking {self.id} - {self.vendor_name} for Stall {self.stall.name}>'
 
-# --- แก้ไขฟังก์ชัน index() ---
 @app.route('/')
 def index():
     today = date.today()
     stalls = Stall.query.all()
     stalls_with_status = []
-    
     for stall in stalls:
-        # เริ่มต้นสถานะเป็น 'ว่าง'
-        status = 'ว่าง'
-
-        # ค้นหาการจองทั้งหมดที่เกี่ยวข้องกับแผงในวันนี้
-        bookings_for_today = Booking.query.filter(
+        booking = Booking.query.filter(
             Booking.stall_id == stall.id,
             Booking.start_date <= today,
-            Booking.end_date >= today
-        ).all()
+            Booking.end_date >= today,
+           # Booking.status == 'approved'
+        ).first()
+
+        status = 'available'
+        if booking:
+            if booking.status == 'approved':
+                status = 'occupied'
+            elif booking.status == 'pending':
+                status = 'pending'
+            else:
+                status = 'occupied' 
         
-        # ตรวจสอบสถานะการจองตามลำดับความสำคัญ
-        has_approved_booking = any(b.status == 'approved' for b in bookings_for_today)
-        has_pending_booking = any(b.status in ['pending', 'pending_verification'] for b in bookings_for_today)
-
-        if has_approved_booking:
-            status = 'ไม่ว่าง'
-        elif has_pending_booking:
-            status = 'รอการอนุมัติ'
-        # ถ้าไม่มีการจองที่ได้รับการอนุมัติหรือรอการอนุมัติ สถานะจะยังคงเป็น 'ว่าง'
-
         stalls_with_status.append({'stall': stall, 'status': status})
-        
     return render_template(
         'index.html', 
         stalls_with_status=stalls_with_status
