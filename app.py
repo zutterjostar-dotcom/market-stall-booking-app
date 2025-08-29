@@ -92,24 +92,26 @@ def index():
     today = date.today()
     stalls = Stall.query.all()
     stalls_with_status = []
-    for stall in stalls:
-        # ค้นหาการจองที่มีสถานะ 'approved' หรือ 'pending_verification' หรือ 'pending'
-        booking = Booking.query.filter(
-            Booking.stall_id == stall.id,
-            Booking.start_date <= today,
-            Booking.end_date >= today,
-            # แก้ไขเงื่อนไขการตรวจสอบสถานะ
-            db.or_(Booking.status == 'approved', Booking.status == 'pending_verification', Booking.status == 'pending')
-        ).first()
+    
+    # ดึงการจองทั้งหมดในวันที่ปัจจุบัน
+    all_bookings_today = Booking.query.filter(
+        Booking.start_date <= today,
+        Booking.end_date >= today
+    ).all()
+    
+    # สร้าง dictionary เพื่อเก็บสถานะของแต่ละแผงเพื่อความรวดเร็ว
+    stall_statuses = {}
+    for booking in all_bookings_today:
+        if booking.status == 'approved':
+            stall_statuses[booking.stall_id] = 'ไม่ว่าง'
+        elif booking.status in ['pending', 'pending_verification']:
+            stall_statuses[booking.stall_id] = 'รอการอนุมัติ'
 
-        status = 'ว่าง'
-        if booking:
-            if booking.status == 'approved':
-                status = 'ไม่ว่าง'
-            elif booking.status in ['pending', 'pending_verification']:
-                status = 'รอการอนุมัติ'
-            
+    # ลูปผ่านแต่ละแผงเพื่อกำหนดสถานะ
+    for stall in stalls:
+        status = stall_statuses.get(stall.id, 'ว่าง')
         stalls_with_status.append({'stall': stall, 'status': status})
+        
     return render_template(
         'index.html', 
         stalls_with_status=stalls_with_status
