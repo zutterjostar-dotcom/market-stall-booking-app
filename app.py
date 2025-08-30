@@ -331,7 +331,7 @@ def upload_payment(booking_id):
             filename = secure_filename(file.filename)
 
             # *** แก้ไข: สร้างเส้นทางสำหรับบันทึกไฟล์ ***
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
             # *** แก้ไข: บันทึกไฟล์ลงในโฟลเดอร์ uploads ***
             file.save(file_path)
