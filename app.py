@@ -316,24 +316,27 @@ def upload_payment(booking_id):
     booking = Booking.query.get_or_404(booking_id)
 
     if request.method == 'POST':
+        # ตรวจสอบว่ามีการเลือกไฟล์หรือไม่
         if 'payment_proof' not in request.files:
             flash('ไม่พบไฟล์ที่อัปโหลด', 'danger')
             return redirect(url_for('upload_payment', booking_id=booking_id))
 
         file = request.files['payment_proof']
 
+        # ตรวจสอบว่าชื่อไฟล์ว่างเปล่าหรือไม่
         if file.filename == '':
             flash('ไม่ได้เลือกไฟล์', 'danger')
             return redirect(url_for('upload_payment', booking_id=booking_id))
 
-        if file:
-            # สร้างชื่อไฟล์ที่ไม่ซ้ำกัน
+        # ตรวจสอบนามสกุลไฟล์ที่ได้รับอนุญาต
+        if file and allowed_file(file.filename):
+            # ทำให้ชื่อไฟล์ปลอดภัย
             filename = secure_filename(file.filename)
 
-            # *** แก้ไข: สร้างเส้นทางสำหรับบันทึกไฟล์ ***
+            # สร้างเส้นทางสำหรับบันทึกไฟล์
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-            # *** แก้ไข: บันทึกไฟล์ลงในโฟลเดอร์ uploads ***
+            # บันทึกไฟล์ลงในโฟลเดอร์ uploads
             file.save(file_path)
 
             # อัปเดตข้อมูลในฐานข้อมูล
@@ -343,8 +346,11 @@ def upload_payment(booking_id):
 
             flash('อัปโหลดหลักฐานสำเร็จแล้ว รอการอนุมัติจากผู้ดูแลระบบ', 'success')
             return redirect(url_for('index'))
+        else:
+            flash('ประเภทไฟล์ไม่ถูกต้อง (รองรับ .png, .jpg, .jpeg, .gif)', 'danger')
+            return redirect(url_for('upload_payment', booking_id=booking_id))
 
-    return render_template('upload_payment.html', booking=booking)
+    return render_template('payment.html', booking=booking)
 
 #@app.route('/admin/booking/<int:booking_id>/cancel', methods=['POST'])
 #@admin_required
