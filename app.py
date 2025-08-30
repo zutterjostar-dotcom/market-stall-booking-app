@@ -309,7 +309,7 @@ def delete_stall(stall_id):
 @app.route('/payment/<int:booking_id>')
 def payment(booking_id):
     booking = Booking.query.get_or_404(booking_id)
-    return render_template('payment.html', booking=booking)
+    return render_template('upload_payment.html', booking=booking)
 
 @app.route('/upload_payment/<int:booking_id>', methods=['GET', 'POST'])
 def upload_payment(booking_id):
