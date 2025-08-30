@@ -26,7 +26,7 @@
                 <hr>
 
                 <p class="text-center">เมื่อชำระเงินแล้ว กรุณาอัปโหลดหลักฐานการโอนเงินด้านล่าง</p>
-                <form method="POST" action="{{ url_for('upload_payment_proof', booking_id=booking.id) }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ url_for('upload_payment', booking_id=booking.id) }}" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="payment_proof" class="form-label">อัปโหลดหลักฐานการโอนเงิน (รูปภาพ)</label>
                         <input class="form-control" type="file" id="payment_proof" name="payment_proof" required>
