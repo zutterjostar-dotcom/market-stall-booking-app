@@ -350,7 +350,7 @@ def upload_payment(booking_id):
             flash('ประเภทไฟล์ไม่ถูกต้อง (รองรับ .png, .jpg, .jpeg, .gif)', 'danger')
             return redirect(url_for('upload_payment', booking_id=booking_id))
 
-    return render_template('payment.html', booking=booking)
+    return render_template('upload_payment.html', booking=booking)
 
 #@app.route('/admin/booking/<int:booking_id>/cancel', methods=['POST'])
 #@admin_required
