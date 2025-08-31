@@ -388,13 +388,12 @@ def booking_summary():
     # สรุปผล
     total_income = 0
     booked_stalls = []
-    
+
     for booking in approved_bookings:
-        # สมมติว่าใน Model Booking มีคอลัมน์ price
-        total_income += booking.price
+        total_income += booking.total_price # <-- เปลี่ยนเป็น total_price
         booked_stalls.append({
-            'stall_number': booking.stall_number,
-            'user_name': booking.user_name,
+            'stall_number': booking.stall.name, # <-- เปลี่ยนจาก stall_number เป็น stall.name
+            'user_name': booking.vendor_name,  # <-- เปลี่ยนจาก user_name เป็น vendor_name
             'booking_date': booking.start_date.strftime('%Y-%m-%d')
         })
 
