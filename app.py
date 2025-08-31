@@ -6,6 +6,8 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+import datetime
+import calendar
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_super_secret_key_here'
@@ -351,6 +353,57 @@ def upload_payment(booking_id):
             return redirect(url_for('upload_payment', booking_id=booking_id))
 
     return render_template('upload_payment.html', booking=booking)
+
+@app.route('/summary', methods=['GET'])
+def booking_summary():
+    # ดึงพารามิเตอร์ 'date' จาก URL (ถ้ามี)
+    date_str = request.args.get('date')
+    
+    # กำหนดวันที่เริ่มต้นและสิ้นสุดสำหรับดูข้อมูล
+    start_date = None
+    end_date = None
+    
+    if date_str:
+        # ถ้ามีวันที่ระบุ ให้แสดงสรุปรายวัน
+        try:
+            target_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+            start_date = target_date
+            end_date = target_date
+        except ValueError:
+            flash('รูปแบบวันที่ไม่ถูกต้อง', 'danger')
+            return redirect(url_for('booking_summary'))
+    else:
+        # ถ้าไม่มีวันที่ระบุ ให้แสดงสรุปรายเดือนของเดือนปัจจุบัน
+        today = datetime.date.today()
+        start_date = today.replace(day=1)
+        end_date = today.replace(day=calendar.monthrange(today.year, today.month)[1])
+
+    # ค้นหาการจองที่ได้รับการอนุมัติในช่วงวันที่ที่กำหนด
+    approved_bookings = Booking.query.filter(
+        Booking.status == 'approved',
+        Booking.start_date >= start_date,
+        Booking.end_date <= end_date
+    ).all()
+
+    # สรุปผล
+    total_income = 0
+    booked_stalls = []
+    
+    for booking in approved_bookings:
+        # สมมติว่าใน Model Booking มีคอลัมน์ price
+        total_income += booking.price
+        booked_stalls.append({
+            'stall_number': booking.stall_number,
+            'user_name': booking.user_name,
+            'booking_date': booking.start_date.strftime('%Y-%m-%d')
+        })
+
+    return render_template('summary.html', 
+                           total_income=total_income,
+                           num_booked_stalls=len(booked_stalls),
+                           booked_stalls=booked_stalls,
+                           start_date=start_date.strftime('%Y-%m-%d'),
+                           end_date=end_date.strftime('%Y-%m-%d'))
 
 #@app.route('/admin/booking/<int:booking_id>/cancel', methods=['POST'])
 #@admin_required

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h2 class="mb-4">สรุปผลการจอง ({{ start_date }} ถึง {{ end_date }})</h2>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">จำนวนแผงที่ถูกจอง</h5>
+                        <p class="card-text h1">{{ num_booked_stalls }} แผง</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">รายได้รวม</h5>
+                        <p class="card-text h1">{{ total_income }} บาท</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mt-5">รายการแผงที่ถูกจอง</h3>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>วันที่จอง</th>
+                    <th>แผงที่</th>
+                    <th>ชื่อผู้เช่า</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stall in booked_stalls %}
+                    <tr>
+                        <td>{{ stall.booking_date }}</td>
+                        <td>{{ stall.stall_number }}</td>
+                        <td>{{ stall.user_name }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
