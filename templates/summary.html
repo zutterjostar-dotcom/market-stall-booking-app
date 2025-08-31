@@ -2,7 +2,28 @@
 
 {% block content %}
     <div class="container mt-5">
-        <h2 class="mb-4">สรุปผลการจอง ({{ start_date }} ถึง {{ end_date }})</h2>
+        <h2 class="mb-4">สรุปผลการจอง</h2>
+
+        <div class="card p-4 mb-4">
+            <h5 class="card-title">เลือกช่วงเวลาที่ต้องการดู</h5>
+            <form action="{{ url_for('booking_summary') }}" method="get">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label for="date-select" class="form-label">เลือกวัน</label>
+                        <input type="date" class="form-control" id="date-select" name="date" value="{{ selected_date }}">
+                    </div>
+                    <div class="col-md-5">
+                        <label for="month-select" class="form-label">เลือกเดือนและปี</label>
+                        <input type="month" class="form-control" id="month-select" name="month" value="{{ selected_month }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">ดูรายงาน</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <h3 class="text-center my-4">รายงานสรุปผลการจอง ({{ display_range }})</h3>
 
         <div class="row mb-4">
             <div class="col-md-6">
@@ -24,23 +45,29 @@
         </div>
 
         <h3 class="mt-5">รายการแผงที่ถูกจอง</h3>
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>วันที่จอง</th>
-                    <th>แผงที่</th>
-                    <th>ชื่อผู้เช่า</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for stall in booked_stalls %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
                     <tr>
-                        <td>{{ stall.booking_date }}</td>
-                        <td>{{ stall.stall_number }}</td>
-                        <td>{{ stall.user_name }}</td>
+                        <th>วันที่จอง</th>
+                        <th>แผงที่</th>
+                        <th>ชื่อผู้เช่า</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for stall in booked_stalls %}
+                        <tr>
+                            <td>{{ stall.booking_date }}</td>
+                            <td>{{ stall.stall_number }}</td>
+                            <td>{{ stall.user_name }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center">ไม่มีการจองในช่วงเวลานี้</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 {% endblock %}

@@ -356,12 +356,13 @@ def upload_payment(booking_id):
 
 @app.route('/summary', methods=['GET'])
 def booking_summary():
-    # ดึงพารามิเตอร์ 'date' จาก URL (ถ้ามี)
+    # ดึงพารามิเตอร์ 'date' และ 'month' จาก URL
     date_str = request.args.get('date')
+    month_str = request.args.get('month')
     
-    # กำหนดวันที่เริ่มต้นและสิ้นสุดสำหรับดูข้อมูล
     start_date = None
     end_date = None
+    display_range = ""
     
     if date_str:
         # ถ้ามีวันที่ระบุ ให้แสดงสรุปรายวัน
@@ -369,14 +370,26 @@ def booking_summary():
             target_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
             start_date = target_date
             end_date = target_date
+            display_range = target_date.strftime('%d-%m-%Y')
         except ValueError:
             flash('รูปแบบวันที่ไม่ถูกต้อง', 'danger')
             return redirect(url_for('booking_summary'))
+    elif month_str:
+        # ถ้ามีเดือนระบุ ให้แสดงสรุปรายเดือน
+        try:
+            target_date = datetime.datetime.strptime(month_str, '%Y-%m').date()
+            start_date = target_date.replace(day=1)
+            end_date = target_date.replace(day=calendar.monthrange(target_date.year, target_date.month)[1])
+            display_range = target_date.strftime('%B %Y')
+        except ValueError:
+            flash('รูปแบบเดือนไม่ถูกต้อง', 'danger')
+            return redirect(url_for('booking_summary'))
     else:
-        # ถ้าไม่มีวันที่ระบุ ให้แสดงสรุปรายเดือนของเดือนปัจจุบัน
+        # ถ้าไม่มีการระบุช่วงเวลา ให้แสดงสรุปของเดือนปัจจุบันเป็นค่าเริ่มต้น
         today = datetime.date.today()
         start_date = today.replace(day=1)
         end_date = today.replace(day=calendar.monthrange(today.year, today.month)[1])
+        display_range = today.strftime('%B %Y')
 
     # ค้นหาการจองที่ได้รับการอนุมัติในช่วงวันที่ที่กำหนด
     approved_bookings = Booking.query.filter(
@@ -388,21 +401,23 @@ def booking_summary():
     # สรุปผล
     total_income = 0
     booked_stalls = []
-
+    
     for booking in approved_bookings:
-        total_income += booking.total_price # <-- เปลี่ยนเป็น total_price
+        # แก้ไขให้ใช้ total_price, stall.name, และ vendor_name
+        total_income += booking.total_price
         booked_stalls.append({
-            'stall_number': booking.stall.name, # <-- เปลี่ยนจาก stall_number เป็น stall.name
-            'user_name': booking.vendor_name,  # <-- เปลี่ยนจาก user_name เป็น vendor_name
-            'booking_date': booking.start_date.strftime('%Y-%m-%d')
+            'stall_number': booking.stall.name,
+            'user_name': booking.vendor_name,
+            'booking_date': booking.start_date.strftime('%d-%m-%Y')
         })
 
     return render_template('summary.html', 
                            total_income=total_income,
                            num_booked_stalls=len(booked_stalls),
                            booked_stalls=booked_stalls,
-                           start_date=start_date.strftime('%Y-%m-%d'),
-                           end_date=end_date.strftime('%Y-%m-%d'))
+                           display_range=display_range,
+                           selected_date=date_str,
+                           selected_month=month_str)
 
 #@app.route('/admin/booking/<int:booking_id>/cancel', methods=['POST'])
 #@admin_required
