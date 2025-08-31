@@ -84,7 +84,7 @@ class Booking(db.Model):
     end_date = db.Column(db.Date, nullable=False)
     total_price = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(50), default='pending')
-    booked_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    booked_at = db.Column(db.DateTime, default=datetime.datetime.now, nullable=False)
     payment_proof = db.Column(db.String(255), nullable=True)
 
     def __repr__(self):
