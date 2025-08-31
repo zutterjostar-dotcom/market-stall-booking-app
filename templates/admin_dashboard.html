@@ -8,24 +8,31 @@
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <h5 class="card-title">ภาพรวม</h5>
-        <div class="row">
-            <div class="col-md-4">
-                <div class="alert alert-info text-center" role="alert">
-                    <h4 class="alert-heading">{{ stalls|length }}</h4>
-                    <p>จำนวนแผงตลาดทั้งหมด</p>
-                </div>
+        <div class="row g-3">
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-store-alt fa-2x text-info mb-3"></i>
+                <h4 class="card-title">{{ stalls|length }}</h4>
+                <p class="card-text text-muted">จำนวนแผงตลาดทั้งหมด</p>
             </div>
-            <div class="col-md-4">
-                <div class="alert alert-success text-center" role="alert">
-                    <h4 class="alert-heading">{{ bookings | selectattr('status', 'equalto', 'confirmed') | list | length }}</h4>
-                    <p>การจองที่ได้รับการยืนยัน</p>
-                </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                <h4 class="card-title">{{ bookings | selectattr('status', 'equalto', 'confirmed') | list | length }}</h4>
+                <p class="card-text text-muted">การจองที่ได้รับการยืนยัน</p>
             </div>
-            <div class="col-md-4">
-                <div class="alert alert-warning text-center" role="alert">
-                    <h4 class="alert-heading">{{ bookings | selectattr('status', 'equalto', 'pending') | list | length }}</h4>
-                    <p>การจองที่รอการอนุมัติ</p>
-                </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-hourglass-half fa-2x text-warning mb-3"></i>
+                <h4 class="card-title">{{ bookings | selectattr('status', 'equalto', 'pending') | list | length }}</h4>
+                <p class="card-text text-muted">การจองที่รอการอนุมัติ</p>
             </div>
         </div>
     </div>
